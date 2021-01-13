@@ -1,9 +1,11 @@
 var index = require("./index");
 var users = require("./users");
+var note = require("./note");
 
 module.exports = function(app){
     app.use("/api/index", index);
     app.use("/api/users", users);
+    app.use("/api/note", note);
 
     app.use(function(err, req, res, next) {
         // set locals, only providing error in development
