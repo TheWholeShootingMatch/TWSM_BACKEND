@@ -3,6 +3,9 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+var session = require('express-session');
+var FileStore = require('session-file-store')(session);
+// var MongoStore = require('connect-mongo')(session);   //mongodb에 session저장 시 npm install connect-mongo
 
 const cors = require('cors');
 const db = require('./db');
@@ -22,6 +25,16 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(session({
+  secret: 'keyboard cat',
+  resave: false,
+  saveUninitialized: true,
+  store: new FileStore()  //새로운 폴더에 session 저장할 경우 -> 새로운 폴더 생성
+  // store: new MongoStore({  //mongodb에 session저장할 경우
+  //   url: "mongodb://localhost/test",
+  //   collection: "sessions"
+  // })
+}));
 
 app.use(cors());
 

@@ -4,16 +4,11 @@ var test = require('../models/test');
 
 /* GET home page. */
 router.get("/", function(req, res, next) {
-  test.find(function(err, result){
-    if(err){
-      console.log("err")
-    }
-    else{
-      result.forEach(function(row){
-        console.log(row.feild1);
-      })
-    }
-  })
+  if(req.session.isLogin) {
+    res.send(req.session.id);
+  } else {
+    res.send("main");
+  }
 });
 
 module.exports = router;

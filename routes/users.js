@@ -8,7 +8,12 @@ router.get('/', function(req, res, next) {
 })
 
 router.get('/login', function(req, res, next) {
-  res.send('login');
+  if(req.session.isLogin) {  //login되어있으면 mainpage로 redirect
+    console.log(req.session.isLogin, req.session.id);
+    res.send(req.session.isLogin);
+  } else {
+    res.send("login");
+  }
 });
 
 router.post("/login", function(req,res,next){
@@ -18,6 +23,7 @@ router.post("/login", function(req,res,next){
       }
       else if (!user) {
         console.log("아이디 없음1");
+        res.send({id:''});  //id ===""일 경우 변화 없음..
       }
       else {
         var dbPassword = user.pwd;
@@ -25,18 +31,25 @@ router.post("/login", function(req,res,next){
 
         if (dbPassword === inputPassword) {
           console.log('비밀번호 일치');
-          res.redirect("/api/index");
+          req.session.isLogin = true;
+          req.session.id = req.body.id;
+          res.send({id: req.session.id});
         }
         else {
           console.log('비밀번호 불일치');
+          res.send({id: ''});
         }
       }
     });
-    // res.redirect("/login");
 });
 
 router.get('/signup', function(req, res, next) {
-  res.send('signup');
+  if(req.session.isLogin) {  //login되어있으면 mainpage로 redirect
+    console.log(req.session.isLogin, req.session.id);
+    res.send(req.session.isLogin);
+  } else {
+    res.send("login");
+  }
 });
 
 router.post("/signup", function(req,res,next){
@@ -54,16 +67,18 @@ router.post("/signup", function(req,res,next){
             email: req.body.email
           });
           newUser.save();
+          res.send({isSignup: true, log:"signup ok"});
           res.redirect('/api/users/login');
         }
         else {
           console.log('있는 아이디');
+          res.send({isSignup: false, log:"id is already used"});
         }
       });
     }
     else {
       console.log("비밀번호가 다릅니다.");
-      res.send('비밀번호 다름');
+      res.send({isSignup: false, log:"check password"});
     }
 });
 
