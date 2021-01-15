@@ -18,10 +18,14 @@ const logSchema = new Schema({
         type: String,
         required: true,
     },
+    contents:{
+        type: String,
+        required: true,
+    },
     logdate:{
         type: Date,
         required: true,
-    },
+    }
 });
 
 module.exports = mongoose.model('log', logSchema);
