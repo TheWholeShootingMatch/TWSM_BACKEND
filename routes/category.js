@@ -13,7 +13,7 @@ router.post("/", function(req,res,next){
     TCTnum:"000",
     category:req.body.category
   });
-  log.save(err => {
+  category.save(err => {
     if (err) throw err;
     return res.json({ success: true });
   });

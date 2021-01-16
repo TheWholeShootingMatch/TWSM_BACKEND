@@ -3,12 +3,12 @@ const Schema = mongoose.Schema;
 
 const categorySchema = new Schema({
     TCTnum:{
-        type: String,
-        required: true,
+      type: String,
+      required: true,
     },
     category:{
-        type: String,
-        required: true,
+      type: String,
+      required: true,
     }
 });
 
