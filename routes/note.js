@@ -5,14 +5,10 @@ var Category = require('../models/category');
 
 router.get("/", async (req, res, next) => {
   const logs = await Log.find({});
-  // logs.map((elem) => {
-  //   const Cname = async() => {
-  //     await Category.findOne({ "_id":"600172ca5e37730de891b967"});
-  //     console.log(Cname.category);
-  //     elem.Cnum = Cname.category;
-  //     console.log(elem.Cnum);
-  //   }
-  // });
+  for (const elem of logs) {
+    const Cname = await Category.findOne({"_id":elem.Cnum});
+    elem._doc.category = Cname.category;
+  }
   res.json(logs);
 });
 
