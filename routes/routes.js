@@ -3,6 +3,7 @@ var users = require("./users");
 var note = require("./note");
 var category = require("./category");
 var comment = require("./comment");
+var photo = require("./photo");
 
 module.exports = function(app){
     app.use("/api/index", index);
@@ -10,6 +11,7 @@ module.exports = function(app){
     app.use("/api/note", note);
     app.use("/api/category", category);
     app.use("/api/comment", comment);
+    app.use("/api/photo", photo);
 
     app.use(function(err, req, res, next) {
         // set locals, only providing error in development
@@ -21,3 +23,4 @@ module.exports = function(app){
         res.render('error');
     });
 }
+ 
