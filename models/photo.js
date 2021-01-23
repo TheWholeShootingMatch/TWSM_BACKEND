@@ -5,6 +5,10 @@ const photoSchema = new Schema({
     link:{
       type: String,
       required: true,
+    },
+    type:{
+      type: String,
+      required: true,
     }
 });
 
