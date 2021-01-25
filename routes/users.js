@@ -9,7 +9,7 @@ router.get('/', function(req, res, next) {
 
 router.get('/login', function(req, res, next) {
   if(req.session.isLogin) {  //login되어있으면 mainpage로 redirect
-    console.log(req.session.isLogin, req.session.id);
+    console.log(req.session.isLogin, req.session.user_id);
     res.send(req.session.isLogin);
   } else {
     res.send("login");
@@ -32,7 +32,9 @@ router.post("/login", function(req,res,next){
         if (dbPassword === inputPassword) {
           console.log('비밀번호 일치');
           req.session.isLogin = true;
-          req.session.id = req.body.id;
+          req.session.user_id = req.body.id;
+          console.log(req.body.id);
+          console.log(req.session.user_id);
           res.send({id: req.session.id});
         }
         else {
@@ -68,7 +70,6 @@ router.post("/signup", function(req,res,next){
           });
           newUser.save();
           res.send({isSignup: true, log:"signup ok"});
-          res.redirect('/api/users/login');
         }
         else {
           console.log('있는 아이디');
