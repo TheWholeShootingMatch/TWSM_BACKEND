@@ -35,7 +35,7 @@ router.post("/login", function(req,res,next){
           req.session.user_id = req.body.id;
           console.log(req.body.id);
           console.log(req.session.user_id);
-          res.send({id: req.session.id});
+          res.send({id: req.session.user_id});
         }
         else {
           console.log('비밀번호 불일치');
@@ -47,7 +47,7 @@ router.post("/login", function(req,res,next){
 
 router.get('/signup', function(req, res, next) {
   if(req.session.isLogin) {  //login되어있으면 mainpage로 redirect
-    console.log(req.session.isLogin, req.session.id);
+    console.log(req.session.isLogin, req.session.user_id);
     res.send(req.session.isLogin);
   } else {
     res.send("login");
