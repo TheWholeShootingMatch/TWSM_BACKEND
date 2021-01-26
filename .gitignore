@@ -12,6 +12,9 @@ node_modules
 # uploaded files
 /uploads
 
+#session files
+/sessions
+
 # production
 /build
 
