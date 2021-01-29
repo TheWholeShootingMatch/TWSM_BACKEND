@@ -25,7 +25,7 @@ const notificationSchema = new Schema({
     status: {
         type: Boolean,
         required: true
-    },
+    }
 });
 
 module.exports = mongoose.model("notifications", notificationSchema);
