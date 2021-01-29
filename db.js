@@ -1,7 +1,9 @@
 const mongoose = require('mongoose');
+require('dotenv').config;
+
 module.exports = () => {
   function connect() {
-    mongoose.connect('mongodb://userone:gksdideotwsm@13.124.192.207:27017/database', function(err) {
+    mongoose.connect(process.env.DB_HOST, function(err) {
       if (err) {
         console.error('mongodb connection error', err);
       }
