@@ -6,6 +6,7 @@ var comment = require("./comment");
 var photo = require("./photo");
 var requestProject = require("./myPage/RequestProject");
 var myPage = require("./myPage/myPage");
+var notification = require("./myPage/notification");
 
 module.exports = function(app){
     app.use("/api/index", index);
@@ -16,6 +17,7 @@ module.exports = function(app){
     app.use("/api/photo", photo);
     app.use("/api/tct", requestProject);
     app.use("/api/mypage", myPage);
+    app.use("/api/notification", notification);
 
     app.use(function(err, req, res, next) {
         // set locals, only providing error in development
