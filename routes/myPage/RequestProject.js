@@ -28,12 +28,53 @@ router.get("/", async (req, res, next) => {
     if (req.session.user_id === "manager") {
         requested_project = await TCTs.find({});
     }
-    //유저가 요청한 프로젝트 (승인 여부 : A)
+    //유저가 요청한 프로젝트 (승인 여부 : S)
     else {
-        requested_project = await TCTs.find({ owner: req.session.user_id, status: "A" });
+        requested_project = await TCTs.find({ owner: req.session.user_id, status: "S" });
     }
     res.json(requested_project);
 });
 
+router.post("/approve", (req, res, next) => {
+    
+    const _id = req.body._id;
+    const owner = req.body.owner;
+    const title = req.body.title;
+
+    const approve = { $set: { status: "A" } }; //프로젝트 승인
+    let updateState = false;
+    
+    TCTs.updateOne({ _id: _id }, approve, function (err, res) {
+        if (err) {
+            console.log("fail to approve project");
+        }
+        else {
+            console.log(`${_id} project is successfully approved`);
+            updateState = true;
+        } 
+    });
+
+    const approveNotification = new notifications({
+        TcTnum: _id,
+        sender: "manager",
+        receiver: owner,
+        sendTime: new Date().getTime(),
+        type: "A",
+        status: true,
+    });
+
+    approveNotification.save(err => {
+        if (err) {
+            console.log("fail to send approve notification");
+            updateState = false;
+        }
+        else {
+            console.log(`success to send approve notification`);
+            updateState = true;
+        }
+    });
+
+    res.json(updateState);
+})
 
 module.exports = router;
