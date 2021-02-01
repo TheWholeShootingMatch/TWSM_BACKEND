@@ -13,6 +13,11 @@ router.get("/", async (req, res, next) => {
   res.json(models);
 });
 
+router.post("/fetch", async (req, res, next) => {
+  const model = await Model.findOne({ _id:req.body._id });
+  res.json(model);
+});
+
 //// for model_detail
 router.get("/detail", async (req, res, next) => {
   const models = await Model.find({});
