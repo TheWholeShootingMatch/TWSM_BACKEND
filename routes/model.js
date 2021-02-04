@@ -7,6 +7,20 @@ var Model = require('../models/model');
 
 require('dotenv').config({ path: '.env' });
 
+//// Checking the existence of a profile
+router.get("/ismodel", async (req, res, next) => {
+  const model = await Model.findOne({ Uid:req.session.user_id });
+  if (model == null) {
+    res.json(false)
+  }
+  res.json(true);
+});
+
+router.get("/searchForUid", async (req, res, next) => {
+  const model = await Model.findOne({ Uid:req.session.user_id });
+  res.json(model);
+});
+
 //// for model
 router.get("/", async (req, res, next) => {
   const models = await Model.find({});
@@ -38,10 +52,31 @@ const upload = multer({
     }),
 }).single("file");
 
-router.post('/new', upload, (req, res, next) => {
+router.post('/new', upload, async (req, res, next) => {
   console.log("data received");
+  if (req.body.isModel) {
+    await Model.updateOne({ Uid:req.session.user_id },
+      {
+        Uid: req.session.user_id,
+        profile_img: req.file.location,
+        Name: req.body.Name,
+        Age: req.body.Age,
+        Gender: req.body.Gender,
+        height: req.body.height,
+        Busto: req.body.Busto,
+        Quadril: req.body.Quadril,
+        Cintura: req.body.Cintura,
+        instagram: req.body.instagram,
+        email: req.body.email,
+        self_introduction: req.body.self_introduction,
+        career: req.body.career
+      }
+    );
+    return res.json({ success: true });
+  }
+  else {
     let model = new Model({
-      Uid: "000",
+      Uid: req.session.user_id,
       profile_img: req.file.location,
       Name: req.body.Name,
       Age: req.body.Age,
@@ -56,10 +91,11 @@ router.post('/new', upload, (req, res, next) => {
       career: req.body.career
     });
 
-    model.save(err => {
-      if (err) throw err;
+    await model.save(function(err,room) {
+      console.log(room.id);
       return res.json({ success: true });
     });
+  }
 });
 
 module.exports = router;
