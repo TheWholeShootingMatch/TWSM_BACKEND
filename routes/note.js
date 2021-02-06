@@ -18,7 +18,7 @@ router.post("/", function(req,res,next){
 
   let log = new Log({
     TcTnum:"000",
-    id:"abc",
+    id: req.session.user_id,
     Cnum:req.body.Cnum,
     title:req.body.new_title,
     contents: req.body.new_text,
