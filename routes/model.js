@@ -9,7 +9,11 @@ require('dotenv').config({ path: '.env' });
 
 //// Checking the existence of a profile
 router.get("/ismodel", async (req, res, next) => {
-  const model = await Model.findOne({ Uid:req.session.user_id });
+  const model = await Model.findOne({ Uid:req.session.user_id }, (err) => {
+    if(err) {
+      console.log(err);
+    }
+  });
   if (model == null) {
     res.json(false)
   }
@@ -17,20 +21,34 @@ router.get("/ismodel", async (req, res, next) => {
 });
 
 router.get("/searchForUid", async (req, res, next) => {
-  const model = await Model.findOne({ Uid:req.session.user_id });
+  const model = await Model.findOne({ Uid:req.session.user_id }, (err) => {
+    if(err) {
+      console.log(err);
+    }
+  });
   res.json(model);
 });
 
 //// for model
-router.get("/", async (req, res, next) => {
-  const models = await Model.find({});
+router.post("/", async (req, res, next) => {
+  const models = await Model.find(req.body.param, (err) => {
+    if(err) {
+      console.log(err);
+    }
+  });
   res.json(models);
 });
 
 //// for model_detail
 router.post("/fetch", async (req, res, next) => {
-  const model = await Model.findOne({ _id:req.body._id });
-  res.json(model);
+  if (req.body._id.match(/^[0-9a-fA-F]{24}$/)) {
+    const model = await Model.findOne({ _id:req.body._id }, (err) => {
+      if(err) {
+        console.log(err);
+      }
+    });
+    res.json(model);
+  }
 });
 
 //// for new_model

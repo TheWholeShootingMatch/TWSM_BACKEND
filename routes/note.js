@@ -4,7 +4,9 @@ var Log = require('../models/log');
 var Category = require('../models/category');
 
 router.get("/", async (req, res, next) => {
-  const logs = await Log.find({});
+  const logs = await Log.find({}, (err) => {
+    if (err) throw err;
+  });
   for (const elem of logs) {
     const Cname = await Category.findOne({"_id":elem.Cnum});
     elem._doc.category = Cname.category;
