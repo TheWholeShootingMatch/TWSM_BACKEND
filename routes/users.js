@@ -7,15 +7,17 @@ router.get('/', function(req, res, next) {
   res.send("/");
 })
 
+/* login이 되어있는지 확인*/
 router.get('/login', function(req, res, next) {
-  if(req.session.isLogin) {  //login되어있으면 mainpage로 redirect
+  if(req.session.isLogin) {
     console.log(req.session.isLogin, req.session.user_id);
     res.send(req.session.isLogin);
   } else {
-    res.send("login");
+    res.send(false);
   }
 });
 
+/* logout */
 router.get('/logout', function (req, res, next) {
   req.session.destroy(function () {
     req.session;
@@ -23,6 +25,7 @@ router.get('/logout', function (req, res, next) {
   res.json(true);
 });
 
+/* login 시도 */
 router.post("/login", function(req,res,next){
     User.findOne({id:req.body.id}, function(err, user) {
       if(err) {
@@ -61,6 +64,7 @@ router.get('/signup', function(req, res, next) {
   }
 });
 
+/* 회원가입 시도 */
 router.post("/signup", function(req,res,next){
     if(req.body.password === req.body.password_repeat) {
       User.findOne({id:req.body.id}, function(err, user) {
