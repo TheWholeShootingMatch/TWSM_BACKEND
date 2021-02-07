@@ -18,7 +18,6 @@ module.exports = function(app){
     app.use("/api/tct", requestProject);
     app.use("/api/mypage", myPage);
     app.use("/api/notification", notification);
-
     app.use(function(err, req, res, next) {
         // set locals, only providing error in development
         res.locals.message = err.message;
