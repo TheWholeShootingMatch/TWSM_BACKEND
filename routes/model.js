@@ -38,8 +38,8 @@ router.post("/", async (req, res, next) => {
     }
   })
   .sort(req.body.sort)
-  .skip(req.body.skip.cur * req.body.skip.postNum)
-  .limit(req.body.skip.postNum);
+  .skip(req.body.skip)
+  .limit(req.body.limit);
 
   res.json(models);
 });
