@@ -31,11 +31,16 @@ router.get("/searchForUid", async (req, res, next) => {
 
 //// for model
 router.post("/", async (req, res, next) => {
-  const models = await Model.find(req.body.param, (err) => {
+  const models = await Model
+  .find(req.body.find, (err) => {
     if(err) {
       console.log(err);
     }
-  });
+  })
+  .sort(req.body.sort)
+  .skip(req.body.skip.cur * req.body.skip.postNum)
+  .limit(req.body.skip.postNum);
+
   res.json(models);
 });
 
