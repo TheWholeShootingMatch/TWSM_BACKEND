@@ -77,28 +77,9 @@ const upload = multer({
 
 router.post('/new', upload, async (req, res, next) => {
   console.log("data received");
-  if (req.body.isModel) {
-    await Model.updateOne({ Uid:req.session.user_id },
-      {
-        Uid: req.session.user_id,
-        profile_img: req.file.location,
-        Name: req.body.Name,
-        Age: req.body.Age,
-        Gender: req.body.Gender,
-        height: req.body.height,
-        Busto: req.body.Busto,
-        Quadril: req.body.Quadril,
-        Cintura: req.body.Cintura,
-        instagram: req.body.instagram,
-        email: req.body.email,
-        self_introduction: req.body.self_introduction,
-        career: req.body.career
-      }
-    );
-    return res.json({ success: true });
-  }
-  else {
-    let model = new Model({
+  await Model.findOneAndUpdate(
+    { Uid:req.session.user_id },
+    {
       Uid: req.session.user_id,
       profile_img: req.file.location,
       Name: req.body.Name,
@@ -111,14 +92,17 @@ router.post('/new', upload, async (req, res, next) => {
       instagram: req.body.instagram,
       email: req.body.email,
       self_introduction: req.body.self_introduction,
-      career: req.body.career
-    });
-
-    await model.save(function(err,room) {
-      console.log(room.id);
+      career: req.body.career,
+      language : req.body.language
+    },
+    {
+      upsert:true
+    },
+    err => {
+      if (err) throw err;
       return res.json({ success: true });
-    });
-  }
+    }
+  );
 });
 
 module.exports = router;

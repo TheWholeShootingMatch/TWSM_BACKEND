@@ -7,6 +7,7 @@ var model = require("./model");
 var requestProject = require("./myPage/RequestProject");
 var myPage = require("./myPage/myPage");
 var notification = require("./myPage/notification");
+var photographicAreaM = require("./photographicAreaM");
 
 module.exports = function(app){
     app.use("/api/index", index);
@@ -18,6 +19,7 @@ module.exports = function(app){
     app.use("/api/tct", requestProject);
     app.use("/api/mypage", myPage);
     app.use("/api/notification", notification);
+    app.use("/api/photographicAreaM", photographicAreaM);
     app.use(function(err, req, res, next) {
         // set locals, only providing error in development
         res.locals.message = err.message;

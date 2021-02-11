@@ -1,5 +1,8 @@
 const dotenv = require('dotenv');
 const mongoose = require('mongoose');
+mongoose.set('useNewUrlParser', true);
+mongoose.set('useFindAndModify', false);
+mongoose.set('useUnifiedTopology', true);
 
 module.exports = () => {
   dotenv.config()

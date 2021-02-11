@@ -53,6 +53,10 @@ const modelSchema = new Schema({
     career:{
       type: String,
       required: true,
+    },
+    language:{
+      type: String,
+      required: true,
     }
 });
 
