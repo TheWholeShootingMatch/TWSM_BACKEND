@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
-const modelSchema = new Schema({
+const photographerSchema = new Schema({
     Uid:{
       type: String,
       required: true,
@@ -13,36 +13,12 @@ const modelSchema = new Schema({
       type: String,
       required: true,
     },
-    Age:{
-      type: Number,
-      required: true,
-    },
-    Gender:{
+    email:{
       type: String,
-      required: true,
-    },
-    height:{
-      type: Number,
-      required: true,
-    },
-    Busto:{
-      type: Number,
-      required: true,
-    },
-    Quadril:{
-      type: Number,
-      required: true,
-    },
-    Cintura:{
-      type: Number,
       required: true,
     },
     instagram:{
       type: String,
-    },
-    email:{
-      type: String,
-      required: true,
     },
     self_introduction:{
       type: String,
@@ -58,4 +34,4 @@ const modelSchema = new Schema({
     }
 });
 
-module.exports = mongoose.model('model', modelSchema);
+module.exports = mongoose.model('photographer', photographerSchema);
