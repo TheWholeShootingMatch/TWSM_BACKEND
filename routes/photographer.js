@@ -3,36 +3,36 @@ var router = express.Router();
 var AWS = require('aws-sdk');
 var multer  = require('multer')
 var multerS3 = require('multer-s3');
-var Model = require('../models/model');
-var PhotographicAreaM = require('../models/photographicAreaM');
+var Photographer = require('../models/photographer');
+var PhotographicAreaP = require('../models/photographicAreaP');
 
 require('dotenv').config({ path: '.env' });
 
 //// Checking the existence of a profile
-router.get("/ismodel", async (req, res, next) => {
-  const model = await Model.findOne({ Uid:req.session.user_id }, (err) => {
+router.get("/isPhotographer", async (req, res, next) => {
+  const photographer = await Photographer.findOne({ Uid:req.session.user_id }, (err) => {
     if(err) {
       console.log(err);
     }
   });
-  if (model == null) {
+  if (photographer == null) {
     res.json(false)
   }
   res.json(true);
 });
 
 router.get("/searchForUid", async (req, res, next) => {
-  const model = await Model.findOne({ Uid:req.session.user_id }, (err) => {
+  const photographer = await Photographer.findOne({ Uid:req.session.user_id }, (err) => {
     if(err) {
       console.log(err);
     }
   });
-  res.json(model);
+  res.json(photographer);
 });
 
-//// for model
+//// for photographer
 router.post("/", async (req, res, next) => {
-  const models = await Model
+  const photographers = await Photographer
   .find(req.body.find, (err) => {
     if(err) {
       console.log(err);
@@ -43,34 +43,34 @@ router.post("/", async (req, res, next) => {
   .limit(req.body.limit);
 
   if (req.body.city !== "") {
-    for (const elem of models) {
-      const photographicAreaM = await PhotographicAreaM.findOne({ Uid: elem.Uid, name: req.body.city });
-      if (photographicAreaM != null) {
+    for (const elem of photographers) {
+      const photographicAreaP = await PhotographicAreaP.findOne({ Uid: elem.Uid, name: req.body.city });
+      if (photographicAreaP != null) {
         elem.city = true;
       }
     }
 
-    const modelC = models.filter(elem => elem.city);
-    res.json(modelC);
+    const photographerC = photographers.filter(elem => elem.city);
+    res.json(photographerC);
   }
   else {
-    res.json(models);
+    res.json(photographers);
   }
 });
 
-//// for model_detail
+//// for photographer_detail
 router.post("/fetch", async (req, res, next) => {
   if (req.body._id.match(/^[0-9a-fA-F]{24}$/)) {
-    const model = await Model.findOne({ _id:req.body._id }, (err) => {
+    const photographer = await Photographer.findOne({ _id:req.body._id }, (err) => {
       if(err) {
         console.log(err);
       }
     });
-    res.json(model);
+    res.json(photographer);
   }
 });
 
-//// for new_model
+//// for new_photographer
 AWS.config.update({
     region : 'ap-northeast-2',
     accessKeyId : process.env.ACCESS_KEY_ID,
@@ -91,24 +91,23 @@ const upload = multer({
 
 router.post('/new', upload, async (req, res, next) => {
   console.log("data received");
-  await Model.findOneAndUpdate(
+  const update = {
+    Uid: req.session.user_id,
+    Name: req.body.Name,
+    instagram: req.body.instagram,
+    email: req.body.email,
+    self_introduction: req.body.self_introduction,
+    career: req.body.career,
+    language : req.body.language
+  };
+
+  if (req.file.location != null) {
+    update.profile_img = req.file.location;
+  }
+
+  await Photographer.findOneAndUpdate(
     { Uid:req.session.user_id },
-    {
-      Uid: req.session.user_id,
-      profile_img: req.file.location,
-      Name: req.body.Name,
-      Age: req.body.Age,
-      Gender: req.body.Gender,
-      height: req.body.height,
-      Busto: req.body.Busto,
-      Quadril: req.body.Quadril,
-      Cintura: req.body.Cintura,
-      instagram: req.body.instagram,
-      email: req.body.email,
-      self_introduction: req.body.self_introduction,
-      career: req.body.career,
-      language : req.body.language
-    },
+    update,
     {
       upsert:true
     },
