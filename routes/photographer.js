@@ -10,7 +10,7 @@ require('dotenv').config({ path: '.env' });
 
 //// Checking the existence of a profile
 router.get("/isPhotographer", async (req, res, next) => {
-  const photographer = await Photographer.findOne({ Uid:req.session.user_id }, (err) => {
+  const photographer = await Photographer.findOne({ Uid:req.session.user_Oid }, (err) => {
     if(err) {
       console.log(err);
     }
@@ -22,7 +22,7 @@ router.get("/isPhotographer", async (req, res, next) => {
 });
 
 router.get("/searchForUid", async (req, res, next) => {
-  const photographer = await Photographer.findOne({ Uid:req.session.user_id }, (err) => {
+  const photographer = await Photographer.findOne({ Uid:req.session.user_Oid }, (err) => {
     if(err) {
       console.log(err);
     }
@@ -92,7 +92,7 @@ const upload = multer({
 router.post('/new', upload, async (req, res, next) => {
   console.log("data received");
   const update = {
-    Uid: req.session.user_id,
+    Uid: req.session.user_Oid,
     Name: req.body.Name,
     instagram: req.body.instagram,
     email: req.body.email,
@@ -106,7 +106,7 @@ router.post('/new', upload, async (req, res, next) => {
   }
 
   await Photographer.findOneAndUpdate(
-    { Uid:req.session.user_id },
+    { Uid:req.session.user_Oid },
     update,
     {
       upsert:true

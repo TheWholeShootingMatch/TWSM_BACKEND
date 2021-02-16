@@ -5,11 +5,11 @@ var PhotographicAreaP = require('../models/photographicAreaP');
 router.post("/", async function(req,res,next){
   console.log("data recieved");
   await PhotographicAreaP.findOneAndUpdate(
-    {name: req.body.name, Uid: req.session.user_id},
+    {name: req.body.name, Uid: req.session.user_Oid},
     {
       ciso: req.body.ciso,
       siso: req.body.siso,
-      Uid: req.session.user_id,
+      Uid: req.session.user_Oid,
       name: req.body.name,
     },
     {
@@ -23,12 +23,12 @@ router.post("/", async function(req,res,next){
 });
 
 router.delete("/delete/:name", async function(req,res,next){
-  const photographicAreaP = await PhotographicAreaP.findOneAndRemove({ name: req.params.name, Uid: req.session.user_id })
+  const photographicAreaP = await PhotographicAreaP.findOneAndRemove({ name: req.params.name, Uid: req.session.user_Oid })
   .then((result) => res.json(result));
 });
 
 router.get("/fetch", async (req, res, next) => {
-  const photographicAreaP = await PhotographicAreaP.find({ Uid: req.session.user_id });
+  const photographicAreaP = await PhotographicAreaP.find({ Uid: req.session.user_Oid });
   res.json(photographicAreaP);
 });
 

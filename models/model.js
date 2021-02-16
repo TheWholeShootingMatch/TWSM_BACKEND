@@ -3,7 +3,8 @@ const Schema = mongoose.Schema;
 
 const modelSchema = new Schema({
     Uid:{
-      type: String,
+      type: mongoose.SchemaTypes.ObjectId,
+      ref: "user",
       required: true,
     },
     profile_img:{

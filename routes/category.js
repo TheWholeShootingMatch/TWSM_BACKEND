@@ -3,6 +3,7 @@ var router = express.Router();
 var Category = require('../models/category');
 
 router.get("/", async (req, res, next) => {
+  //tct number로 검색
   const category = await Category.find({});
   res.json(category);
 });

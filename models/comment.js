@@ -3,11 +3,13 @@ const Schema = mongoose.Schema;
 
 const commentSchema = new Schema({
     Lnum:{
-      type: String,
+      type: mongoose.SchemaTypes.ObjectId,
+      ref: "log",
       required: true,
     },
     id:{
-      type: String,
+      type: mongoose.SchemaTypes.ObjectId,
+      ref: "user",
       required: true,
     },
     Cdate:{

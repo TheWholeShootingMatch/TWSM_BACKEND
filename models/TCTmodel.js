@@ -1,16 +1,17 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
-const categorySchema = new Schema({
+const TCTmodelSchema = new Schema({
     TCTnum:{
       type: mongoose.SchemaTypes.ObjectId,
       ref: "tct",
       required: true,
     },
-    category:{
-      type: String,
+    Uid:{
+      type: mongoose.SchemaTypes.ObjectId,
+      ref: "user",
       required: true,
     }
 });
 
-module.exports = mongoose.model('category', categorySchema);
+module.exports = mongoose.model('TCTmodel', TCTmodelSchema);

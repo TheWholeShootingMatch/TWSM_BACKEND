@@ -10,7 +10,7 @@ require('dotenv').config({ path: '.env' });
 
 //// Checking the existence of a profile
 router.get("/ismodel", async (req, res, next) => {
-  const model = await Model.findOne({ Uid:req.session.user_id }, (err) => {
+  const model = await Model.findOne({ Uid:req.session.user_Oid }, (err) => {
     if(err) {
       console.log(err);
     }
@@ -22,7 +22,7 @@ router.get("/ismodel", async (req, res, next) => {
 });
 
 router.get("/searchForUid", async (req, res, next) => {
-  const model = await Model.findOne({ Uid:req.session.user_id }, (err) => {
+  const model = await Model.findOne({ Uid:req.session.user_Oid }, (err) => {
     if(err) {
       console.log(err);
     }
@@ -92,9 +92,9 @@ const upload = multer({
 router.post('/new', upload, async (req, res, next) => {
   console.log("data received");
   await Model.findOneAndUpdate(
-    { Uid:req.session.user_id },
+    { Uid:req.session.user_Oid },
     {
-      Uid: req.session.user_id,
+      Uid: req.session.user_Oid,
       profile_img: req.file.location,
       Name: req.body.Name,
       Age: req.body.Age,

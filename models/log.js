@@ -1,30 +1,34 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
+var category = require('./category');
 
 const logSchema = new Schema({
     TcTnum:{
-        type: String,
-        required: true,
+      type: mongoose.SchemaTypes.ObjectId,
+      ref: "tct",
+      required: true,
     },
     id:{
-        type: String,
-        required: true,
+      type: Schema.Types.ObjectId,
+      ref: "user",
+      required: true,
     },
     Cnum:{
-        type: String,
-        required: true,
+      type: Schema.Types.ObjectId,
+      ref: "category",
+      required: true,
     },
     title:{
-        type: String,
-        required: true,
+      type: String,
+      required: true,
     },
     contents:{
-        type: String,
-        required: true,
+      type: String,
+      required: true,
     },
     logdate:{
-        type: Date,
-        required: true,
+      type: Date,
+      required: true,
     }
 });
 

@@ -7,7 +7,7 @@ router.post("/", function(req,res,next){
   const now = new Date();
   let comment = new Comment({
     Lnum: req.body.Lnum,
-    id: req.session.user_id,
+    id: req.session.user_Oid,
     Cdate:now,
     contents: req.body.contents
   });

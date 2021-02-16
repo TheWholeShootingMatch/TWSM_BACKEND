@@ -43,8 +43,7 @@ router.post("/login", function(req,res,next){
           console.log('비밀번호 일치');
           req.session.isLogin = true;
           req.session.user_id = req.body.id;
-          console.log(req.body.id);
-          console.log(req.session.user_id);
+          req.session.user_Oid = user._id;
           res.send({id: req.session.user_id});
         }
         else {

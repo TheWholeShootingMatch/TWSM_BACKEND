@@ -11,7 +11,8 @@ const photographicAreaMSchema = new Schema({
       required: true,
     },
     Uid:{
-      type: String,
+      type: mongoose.SchemaTypes.ObjectId,
+      ref: "user",
       required: true,
     },
     name:{
