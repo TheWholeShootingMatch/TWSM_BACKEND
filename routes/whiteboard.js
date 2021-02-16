@@ -1,8 +1,8 @@
 var express = require("express");
 var router = express.Router();
-var Whiteboard = require('../models/whiteboard');
+var Whiteboard = require("../models/whiteboard");
 
-router.get("/", function(req, res, next) {
+router.post("/", function (req, res, next) {
   const slides = Whiteboard.find({TcTnum:req.data.TcTnum});
   const slidesNum = Whiteboard.countDocuments({TcTnum:req.data.TcTnum});
   res.send(slides, slidesNum);
