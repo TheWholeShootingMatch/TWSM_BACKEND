@@ -6,8 +6,8 @@ const mongoose = require('mongoose');
 
 router.get("/", async (req, res, next) => {
   await Log
-  .find()
-  .populate('category')
+  .find({})
+  .populate('Cnum')
   .exec((err,logs) => {
     if (err) throw err;
     console.log(logs);
