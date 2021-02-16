@@ -6,10 +6,6 @@ const whiteboardSchema = new Schema({
     type: String,
     required: true,
   },
-  Snum:{
-    type: Number,
-    required: true,
-  },
   Sname:{
     type: String,
     required: true,
