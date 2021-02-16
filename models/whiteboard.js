@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const whiteboardSchema = new Schema({
-  TCTnum:{
+  TcTnum:{
     type: String,
     required: true,
   },
