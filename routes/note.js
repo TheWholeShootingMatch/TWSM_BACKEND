@@ -1,16 +1,15 @@
 var express = require('express');
 var router = express.Router();
 var Log = require('../models/log');
-var Category = require('../models/category');
 const mongoose = require('mongoose');
 
-router.get("/", async (req, res, next) => {
+router.post("/fetch", async (req, res, next) => {
   await Log
-  .find({})
-  .populate('Cnum')
+  .find(req.body.find)
+  .populate('writer')
+  .populate('category')
   .exec((err,logs) => {
     if (err) throw err;
-    console.log(logs);
     res.json(logs);
   });
 });
@@ -22,12 +21,13 @@ router.post("/", function(req,res,next){
 
   let log = new Log({
     TcTnum: tctnum,
-    id: req.session.user_Oid,
-    Cnum:req.body.Cnum,
-    title:req.body.new_title,
-    contents: req.body.new_text,
+    writer: req.session.user_Oid,
+    category:req.body.category,
+    title:req.body.title,
+    contents: req.body.text,
     logdate: now
   });
+
   log.save(err => {
     if (err) throw err;
     return res.json({ success: true });

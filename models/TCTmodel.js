@@ -4,12 +4,12 @@ const Schema = mongoose.Schema;
 const TCTmodelSchema = new Schema({
     TCTnum:{
       type: mongoose.SchemaTypes.ObjectId,
-      ref: "tct",
+      ref: "TCT",
       required: true,
     },
     Uid:{
       type: mongoose.SchemaTypes.ObjectId,
-      ref: "user",
+      ref: "User",
       required: true,
     }
 });

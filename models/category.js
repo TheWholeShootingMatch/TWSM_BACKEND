@@ -4,10 +4,10 @@ const Schema = mongoose.Schema;
 const categorySchema = new Schema({
     TcTnum:{
       type: mongoose.SchemaTypes.ObjectId,
-      ref: "tct",
+      ref: "TCT",
       required: true,
     },
-    category:{
+    name:{
       type: String,
       required: true,
     }

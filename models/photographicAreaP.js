@@ -12,7 +12,7 @@ const photographicAreaPSchema = new Schema({
     },
     Uid:{
       type: mongoose.SchemaTypes.ObjectId,
-      ref: "user",
+      ref: "User",
       required: true,
     },
     name:{

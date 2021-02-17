@@ -4,7 +4,7 @@ const Schema = mongoose.Schema;
 const modelSchema = new Schema({
     Uid:{
       type: mongoose.SchemaTypes.ObjectId,
-      ref: "user",
+      ref: "User",
       required: true,
     },
     profile_img:{

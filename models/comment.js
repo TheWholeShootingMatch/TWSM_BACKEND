@@ -7,12 +7,12 @@ const commentSchema = new Schema({
       ref: "log",
       required: true,
     },
-    id:{
+    writer:{
       type: mongoose.SchemaTypes.ObjectId,
-      ref: "user",
+      ref: "User",
       required: true,
     },
-    Cdate:{
+    Wdate:{
       type: Date,
       required: true,
     },

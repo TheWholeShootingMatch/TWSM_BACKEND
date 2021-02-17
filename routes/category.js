@@ -10,13 +10,16 @@ router.get("/", async (req, res, next) => {
 
 router.post("/", function(req,res,next){
   console.log("data recieved");
+  const tctnum = new mongoose.Types.ObjectId("600e6a885933af1a8c68aae3");
+
   let category = new Category({
-    TCTnum:"000",
-    category:req.body.category
+    TCTnum:tctnum,
+    name:req.body.name
   });
+
   category.save(err => {
     if (err) throw err;
-    return res.json({ success: true });
+    res.json({ success: true });
   });
 });
 

@@ -5,20 +5,24 @@ var Comment = require('../models/comment');
 router.post("/", function(req,res,next){
   console.log("data recieved");
   const now = new Date();
+
   let comment = new Comment({
     Lnum: req.body.Lnum,
-    id: req.session.user_Oid,
-    Cdate:now,
+    writer: req.session.user_Oid,
+    Wdate:now,
     contents: req.body.contents
   });
+
   comment.save(err => {
     if (err) throw err;
-    return res.json({ success: true });
+    res.json({ success: true });
   });
 });
 
 router.post("/fetch", async (req, res, next) => {
-  const comments = await Comment.find({ Lnum:req.body.Lnum });
+  const comments = await Comment
+  .find({ Lnum:req.body.Lnum })
+  .populate('writer');
   res.json(comments);
 });
 
