@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
-var TCTs= require('../../models/tcts');
+var TCTs = require('../../models/tcts');
+var TCTmembers = require('../../models/tctMembers');
 var notifications = require("../../models/notification");
 
 router.post("/", (req, res, next) => {
@@ -11,7 +12,7 @@ router.post("/", (req, res, next) => {
         owner: owner,
         title: title,
         description: description,
-        status: "A",
+        status: "S",
         request_time: new Date().getTime()
     });
 
@@ -35,25 +36,29 @@ router.get("/", async (req, res, next) => {
     res.json(requested_project);
 });
 
-router.post("/approve", (req, res, next) => {
-    
-    const _id = req.body._id;
-    const owner = req.body.owner;
-    const title = req.body.title;
+/* 승인 된 프로젝트 넘버와 소속 멤버를 저장 */
+const addTcTMembers = async (_id, userID) => {
+        
+    const newMembers = new TCTmembers({
+        id: userID,
+        TcTnum : _id
+    })
+    /* 초대된 다른 멤버들도 추가할 수 있도록 함 */
+    let result = await newMembers.save();
+    if (!result) {
+        console.log("fail to add members");
+        return false;
+    }
+    else {
+        console.log(result);
+        console.log("success to add members");
+        return true;
+    }
+}
 
-    const approve = { $set: { status: "A" } }; //프로젝트 승인
-    let updateState = false;
+/* 승인 메세지를 전송 */
+const sendApproveNotification = async (_id, owner) => {
     
-    TCTs.updateOne({ _id: _id }, approve, function (err, res) {
-        if (err) {
-            console.log("fail to approve project");
-        }
-        else {
-            console.log(`${_id} project is successfully approved`);
-            updateState = true;
-        } 
-    });
-
     const approveNotification = new notifications({
         TcTnum: _id,
         sender: "manager",
@@ -63,18 +68,54 @@ router.post("/approve", (req, res, next) => {
         status: true,
     });
 
-    approveNotification.save(err => {
-        if (err) {
-            console.log("fail to send approve notification");
+    let result = await approveNotification.save();
+    if (!result) {
+        console.log("fail to send approve notification");
+        return false;
+    }
+    else {
+        console.log(result);
+        console.log(`success to send approve notification`);
+        return true;
+    }
+}
+
+/* 프로젝트 승인 */
+router.post("/approve", async (req, res, next) => {
+    
+    const _id = req.body._id;
+    const owner = req.body.owner;
+    const approve = { $set: { status: "A" } };
+    let updateState;
+
+    try {
+         //tct 프로젝트 status 업데이트 (S -> A)        
+        const result = await TCTs.updateOne({ _id: _id }, approve);
+
+        if (!result) {
+            console.log("fail to approve project");
             updateState = false;
         }
         else {
-            console.log(`success to send approve notification`);
+            console.log(result);
+            console.log(`${_id} project is successfully approved`);
             updateState = true;
         }
-    });
+        
+        let sendNotificationStatus = await sendApproveNotification(_id, owner);
+        let addTcTMembersStatus = await addTcTMembers(_id, owner);
 
-    res.json(updateState);
+        if (sendNotificationStatus && addTcTMembersStatus && updateState) {
+            console.log(sendNotificationStatus, addTcTMembersStatus, updateState);
+            res.json(true);
+        }
+        else {
+            res.json(false);
+        }  
+        
+    } catch (e) {
+        console.log(e);
+    }
 })
 
 module.exports = router;
