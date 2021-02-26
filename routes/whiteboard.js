@@ -22,13 +22,7 @@ router.post("/add", function(req, res, next) {
     Sname: req.body.Sname
   });
   newTab.save();
-  Whiteboard.find({TcTnum:req.body.TcTnum}, function(err, slides) {
-    if(err) {
-      console.log(err);
-    } else {
-      res.send(slides);
-    }
-  });
+  res.send(newTab);
 })
 
 router.post("/rename", function(req, res, next) {
