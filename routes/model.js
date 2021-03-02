@@ -4,7 +4,6 @@ var AWS = require('aws-sdk');
 var multer  = require('multer')
 var multerS3 = require('multer-s3');
 var Model = require('../models/model');
-var PhotographicAreaM = require('../models/photographicAreaM');
 
 require('dotenv').config({ path: '.env' });
 
@@ -42,20 +41,7 @@ router.post("/", async (req, res, next) => {
   .skip(req.body.skip)
   .limit(req.body.limit);
 
-  if (req.body.city !== "") {
-    for (const elem of models) {
-      const photographicAreaM = await PhotographicAreaM.findOne({ Uid: elem.Uid, name: req.body.city });
-      if (photographicAreaM != null) {
-        elem.city = true;
-      }
-    }
-
-    const modelC = models.filter(elem => elem.city);
-    res.json(modelC);
-  }
-  else {
-    res.json(models);
-  }
+  res.json(models);
 });
 
 //// for model_detail
@@ -107,7 +93,8 @@ router.post('/new', upload, async (req, res, next) => {
       email: req.body.email,
       self_introduction: req.body.self_introduction,
       career: req.body.career,
-      language : req.body.language
+      country : req.body.language,
+      locations : req.body.locations,
     },
     {
       upsert:true

@@ -8,19 +8,25 @@ router.get("/", async (req, res, next) => {
   res.json(category);
 });
 
-router.post("/", function(req,res,next){
+router.post("/", async function(req,res,next){
   console.log("data recieved");
+
   const tctnum = new mongoose.Types.ObjectId("600e6a885933af1a8c68aae3");
 
-  let category = new Category({
-    TCTnum:tctnum,
-    name:req.body.name
-  });
-
-  category.save(err => {
-    if (err) throw err;
-    res.json({ success: true });
-  });
+  await Category.findOneAndUpdate(
+    {TCTnum: tctnum,name: req.body.name},
+    {
+      TCTnum: tctnum,
+      name: req.body.name
+    },
+    {
+      upsert:true
+    },
+    err => {
+      if (err) throw err;
+      return res.json({ success: true });
+    }
+  );
 });
 
 module.exports = router;

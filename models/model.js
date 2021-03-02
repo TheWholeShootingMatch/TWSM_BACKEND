@@ -53,9 +53,12 @@ const modelSchema = new Schema({
       type: String,
       required: true,
     },
-    language:{
+    country:{
       type: String,
-      required: true,
+      required: true
+    },
+    locations:{
+      type: String
     }
 });
 
