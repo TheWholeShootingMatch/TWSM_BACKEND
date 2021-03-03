@@ -77,25 +77,30 @@ const upload = multer({
 
 router.post('/new', upload, async (req, res, next) => {
   console.log("data received");
+  const update = {
+    Uid: req.session.user_Oid,
+    Name: req.body.Name,
+    Age: req.body.Age,
+    Gender: req.body.Gender,
+    height: req.body.height,
+    Busto: req.body.Busto,
+    Quadril: req.body.Quadril,
+    Cintura: req.body.Cintura,
+    instagram: req.body.instagram,
+    email: req.body.email,
+    self_introduction: req.body.self_introduction,
+    career: req.body.career,
+    country : req.body.language,
+    locations : req.body.locations,
+  };
+
+  if (req.file.location != null) {
+    update.profile_img = req.file.location;
+  }
+
   await Model.findOneAndUpdate(
     { Uid:req.session.user_Oid },
-    {
-      Uid: req.session.user_Oid,
-      profile_img: req.file.location,
-      Name: req.body.Name,
-      Age: req.body.Age,
-      Gender: req.body.Gender,
-      height: req.body.height,
-      Busto: req.body.Busto,
-      Quadril: req.body.Quadril,
-      Cintura: req.body.Cintura,
-      instagram: req.body.instagram,
-      email: req.body.email,
-      self_introduction: req.body.self_introduction,
-      career: req.body.career,
-      country : req.body.language,
-      locations : req.body.locations,
-    },
+    update,
     {
       upsert:true
     },
