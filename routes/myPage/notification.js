@@ -3,7 +3,7 @@ var router = express.Router();
 var notification = require("../../models/notification");
 
 router.get("/", async (req, res, next) => {
-    const notifications = await notification.find({ receiver: req.session.user_id }, err => {
+    const notifications = await notification.find({ receiver: req.session.user_Oid }, err => {
         if (err) {
             console.log("fail to request notifications",err);
         }

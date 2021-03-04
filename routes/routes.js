@@ -10,6 +10,7 @@ var myPage = require("./myPage/myPage");
 var notification = require("./myPage/notification");
 var whiteboard = require("./whiteboard");
 var collaborations = require("./collaboration/collaboration");
+var tct = require("./tct/tct");
 
 module.exports = function(app){
     app.use("/api/index", index);
@@ -19,8 +20,9 @@ module.exports = function(app){
     app.use("/api/comment", comment);
     app.use("/api/model", model);
     app.use("/api/photographer", photographer);
-    app.use("/api/tct", requestProject);
+    app.use("/api/project", requestProject);
     app.use("/api/mypage", myPage);
+    app.use("/api/tct", tct);
     app.use("/api/notification", notification);
     app.use("/api/whiteboard", whiteboard);
     app.use("/api/collaboration", collaborations);
