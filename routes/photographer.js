@@ -84,11 +84,11 @@ router.post('/new', upload, async (req, res, next) => {
     email: req.body.email,
     self_introduction: req.body.self_introduction,
     career: req.body.career,
-    country : req.body.language,
+    country : req.body.country,
     locations : req.body.locations,
   };
 
-  if (req.file.location != null) {
+  if (req.file != null) {
     update.profile_img = req.file.location;
   }
 
