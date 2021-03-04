@@ -84,7 +84,8 @@ router.post('/new', upload, async (req, res, next) => {
     email: req.body.email,
     self_introduction: req.body.self_introduction,
     career: req.body.career,
-    language : req.body.language
+    country : req.body.language,
+    locations : req.body.locations,
   };
 
   if (req.file.location != null) {
