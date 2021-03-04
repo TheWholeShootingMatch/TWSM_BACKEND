@@ -18,7 +18,21 @@ router.post("/fetch", async (req, res, next) => {
             console.log(err);
         }
     });
-    res.json(findNotification);
+    if (findNotification.status) {
+        const verification = { $set: { status: false } }; //메일 확인
+        await notification.updateOne({ _id: req.body._id }, verification, err => {
+            if (err) {
+                console.log("fail to verify notification");
+            }
+            else {
+                console.log(`${req.body._id} notification is successfully verified`);
+            }
+            res.json(findNotification);
+        });
+    }
+    else {
+        res.json(findNotification);
+    }
 });
 
 module.exports = router;

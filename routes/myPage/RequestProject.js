@@ -2,17 +2,18 @@ var express = require('express');
 var router = express.Router();
 var TCTs= require('../../models/tcts');
 var notifications = require("../../models/notification");
+const { isValidObjectId } = require('mongoose');
 
 router.post("/", (req, res, next) => {
     const { title, description } = req.body;
-    const owner = req.session.user_id;
+    const owner = req.session.user_Oid;
     
     const newRequest = new TCTs({
         owner: owner,
         title: title,
         description: description,
-        status: "A",
-        request_time: new Date().getTime()
+        status: "S",
+        request_time: new Date()
     });
 
     newRequest.save(err => {
@@ -30,9 +31,20 @@ router.get("/", async (req, res, next) => {
     }
     //유저가 요청한 프로젝트 (승인 여부 : S)
     else {
-        requested_project = await TCTs.find({ owner: req.session.user_id, status: "S" });
+        requested_project = await TCTs.find({ owner: req.session.user_Oid, status: "S" });
     }
     res.json(requested_project);
+});
+
+router.get("/my-project", async (req, res, next) => {
+        const myProject = await TCTs.find({ owner: req.session.user_Oid, status: "A" }, err => {
+            if (err) {
+                console.log("fail to request notifications", err);
+            }
+        });
+        console.log(myProject);
+        res.json(myProject);
+   
 });
 
 router.post("/approve", (req, res, next) => {
