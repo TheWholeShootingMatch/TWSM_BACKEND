@@ -25,6 +25,9 @@ var server = http.createServer(app);
  * Listen on provided port, on all network interfaces.
  */
 
+const mongoose = require('mongoose');
+var TCTs = require('../models/tcts');
+
  const NEW_SELECT_EVENT = "newSelect";
 
  const io = require("socket.io")(server, {
@@ -41,6 +44,26 @@ var server = http.createServer(app);
 
    // Listen for new messages
    socket.on(NEW_SELECT_EVENT, (data) => {
+     const tctnum = new mongoose.Types.ObjectId("600e4e20cfd1ee389c8c3fd0");
+
+     let update = {
+       $addToSet: {models : data.body}
+     };
+
+     if (data.func === 'D') {
+       update = {
+         $pull: {models : data.body}
+       };
+     }
+
+     TCTs.findOneAndUpdate(
+       { _id:tctnum },
+       update,
+       err => {
+         if (err) throw err;
+       }
+     );
+
      io.in(roomId).emit(NEW_SELECT_EVENT, data);
    });
 

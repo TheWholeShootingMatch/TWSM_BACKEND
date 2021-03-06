@@ -22,7 +22,11 @@ const TcTSchema = new Schema({
     request_time: {
       type: Date,
       required: true
-    }
+    },
+    models: [{
+        type: mongoose.SchemaTypes.ObjectId,
+        ref: "model"
+    }]
 });
 
 module.exports = mongoose.model("TCT", TcTSchema);

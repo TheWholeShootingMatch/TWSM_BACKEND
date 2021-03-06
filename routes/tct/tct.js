@@ -2,6 +2,7 @@ var express = require("express");
 var router = express.Router();
 var TCTs = require('../../models/tcts');
 var TcTMembers = require('../../models/tctMembers');
+const mongoose = require('mongoose');
 
 router.post("/", async (req, res, next) => {
 
@@ -33,6 +34,33 @@ router.post("/", async (req, res, next) => {
     else {
         res.send(false);
     }
+});
+
+// router.post('/modelP', async (req, res, next) => {
+//
+//   const tctnum = new mongoose.Types.ObjectId("600e4e20cfd1ee389c8c3fd0");
+//
+//   await TCTs.findOneAndUpdate(
+//     { _id:tctnum },
+//     {
+//       models : req.body.models,
+//     },
+//     err => {
+//       if (err) throw err;
+//       return res.json({ success: true });
+//     }
+//   );
+// });
+
+router.post('/modelG', async (req, res, next) => {
+  const tctnum = new mongoose.Types.ObjectId("600e4e20cfd1ee389c8c3fd0");
+
+  const models = await TCTs
+  .findOne({ _id:tctnum })
+  .select('models')
+  .populate('models');
+
+  res.json(models);
 });
 
 module.exports = router;
