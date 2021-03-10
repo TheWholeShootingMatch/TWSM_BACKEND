@@ -36,31 +36,26 @@ router.post("/", async (req, res, next) => {
     }
 });
 
-// router.post('/modelP', async (req, res, next) => {
-//
-//   const tctnum = new mongoose.Types.ObjectId("600e4e20cfd1ee389c8c3fd0");
-//
-//   await TCTs.findOneAndUpdate(
-//     { _id:tctnum },
-//     {
-//       models : req.body.models,
-//     },
-//     err => {
-//       if (err) throw err;
-//       return res.json({ success: true });
-//     }
-//   );
-// });
-
-router.post('/modelG', async (req, res, next) => {
+router.post('/model', async (req, res, next) => {
   const tctnum = new mongoose.Types.ObjectId("600e4e20cfd1ee389c8c3fd0");
 
   const models = await TCTs
   .findOne({ _id:tctnum })
   .select('models')
-  .populate('models');
+  .populate('models')
 
-  res.json(models);
+  res.json(models.models);
+});
+
+router.post('/photographer', async (req, res, next) => {
+  const tctnum = new mongoose.Types.ObjectId("600e4e20cfd1ee389c8c3fd0");
+
+  const photographers = await TCTs
+  .findOne({ _id:tctnum })
+  .select('photographers')
+  .populate('photographers')
+
+  res.json(photographers.photographers);
 });
 
 module.exports = router;

@@ -17,7 +17,15 @@ const userSchema = new Schema({
     name: {
         type: String,
         required: true,
-    }
+    },
+    fav_models: [{
+        type: mongoose.SchemaTypes.ObjectId,
+        ref: "model"
+    }],
+    fav_photographer: [{
+        type: mongoose.SchemaTypes.ObjectId,
+        ref: "photographer"
+    }]
 });
 
 module.exports = mongoose.model("User", userSchema);
