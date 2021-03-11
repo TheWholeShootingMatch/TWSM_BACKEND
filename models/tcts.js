@@ -29,7 +29,7 @@ const TcTSchema = new Schema({
     }],
     photographers : [{
         type: mongoose.SchemaTypes.ObjectId,
-        ref: "model"
+        ref: "photographer"
     }]
 });
 

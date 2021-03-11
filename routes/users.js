@@ -94,7 +94,6 @@ router.post("/signup", function(req,res,next){
 });
 
 router.post("/fav_model", async function(req,res,next){
-
   if (req.session.isLogin === false) {
     res.send("notLogined");
   }
@@ -132,6 +131,51 @@ router.post("/fav_models_del", function(req,res,next){
     { _id:req.session.user_Oid },
     {
       $pull: { fav_models : req.body.id }
+    },
+    err => {
+      if (err) throw err;
+    }
+  );
+});
+
+router.post("/fav_photographer", async function(req,res,next){
+  if (req.session.isLogin === false) {
+    res.send("notLogined");
+  }
+  else {
+    const model = await User
+    .findOne({ _id:req.session.user_Oid, fav_photographers:req.body.id })
+
+    if (model === null) {
+      res.send("F");
+    }
+    else {
+      res.send("T");
+    }
+  }
+});
+
+router.post("/fav_photographers_push", function(req,res,next){
+  console.log("data recieved");
+
+  User.findOneAndUpdate(
+    { _id:req.session.user_Oid },
+    {
+      $addToSet: { fav_photographers : req.body.id }
+    },
+    err => {
+      if (err) throw err;
+    }
+  );
+});
+
+router.post("/fav_photographers_del", function(req,res,next){
+  console.log("data recieved");
+
+  User.findOneAndUpdate(
+    { _id:req.session.user_Oid },
+    {
+      $pull: { fav_photographers : req.body.id }
     },
     err => {
       if (err) throw err;

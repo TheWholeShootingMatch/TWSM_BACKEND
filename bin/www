@@ -46,14 +46,28 @@ var TCTs = require('../models/tcts');
    socket.on(NEW_SELECT_EVENT, (data) => {
      const tctnum = new mongoose.Types.ObjectId("600e4e20cfd1ee389c8c3fd0");
 
-     let update = {
-       $addToSet: {models : data.body}
-     };
-
-     if (data.func === 'D') {
+     let update = {};
+     if (data.type === 'M') {
        update = {
-         $pull: {models : data.body}
+         $addToSet: {models : data.body}
        };
+
+       if (data.func === 'D') {
+         update = {
+           $pull: {models : data.body}
+         };
+       }
+     }
+     else {
+       update = {
+         $addToSet: {photographers : data.body}
+       };
+
+       if (data.func === 'D') {
+         update = {
+           $pull: {photographers : data.body}
+         };
+       }
      }
 
      TCTs.findOneAndUpdate(

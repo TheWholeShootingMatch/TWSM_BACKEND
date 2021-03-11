@@ -22,7 +22,7 @@ const userSchema = new Schema({
         type: mongoose.SchemaTypes.ObjectId,
         ref: "model"
     }],
-    fav_photographer: [{
+    fav_photographers: [{
         type: mongoose.SchemaTypes.ObjectId,
         ref: "photographer"
     }]
