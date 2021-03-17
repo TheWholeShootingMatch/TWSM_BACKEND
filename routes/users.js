@@ -94,19 +94,14 @@ router.post("/signup", function(req,res,next){
 });
 
 router.post("/fav_model", async function(req,res,next){
-  if (req.session.isLogin === false) {
-    res.send("notLogined");
+  const model = await User
+  .findOne({ _id:req.session.user_Oid, fav_models:req.body.id })
+
+  if (model === null) {
+    res.send({check:false});
   }
   else {
-    const model = await User
-    .findOne({ _id:req.session.user_Oid, fav_models:req.body.id })
-
-    if (model === null) {
-      res.send("F");
-    }
-    else {
-      res.send("T");
-    }
+    res.send({check:true});
   }
 });
 
@@ -139,19 +134,14 @@ router.post("/fav_models_del", function(req,res,next){
 });
 
 router.post("/fav_photographer", async function(req,res,next){
-  if (req.session.isLogin === false) {
-    res.send("notLogined");
+  const model = await User
+  .findOne({ _id:req.session.user_Oid, fav_photographers:req.body.id })
+
+  if (model === null) {
+    res.send({check:false});
   }
   else {
-    const model = await User
-    .findOne({ _id:req.session.user_Oid, fav_photographers:req.body.id })
-
-    if (model === null) {
-      res.send("F");
-    }
-    else {
-      res.send("T");
-    }
+    res.send({check:true});
   }
 });
 
