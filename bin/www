@@ -81,6 +81,13 @@ var TCTs = require('../models/tcts');
      io.in(roomId).emit(NEW_SELECT_EVENT, data);
    });
 
+   // Server will apply the changes on its document
+   // and broadcast to everyone in room
+   socket.on("canvasEvent", (data) => {
+     console.log(data);
+     io.in(roomId).emit("canvasEvent", data);
+   });
+
    // Leave the room if the user closes the socket
    socket.on("disconnect", () => {
      socket.leave(roomId);
