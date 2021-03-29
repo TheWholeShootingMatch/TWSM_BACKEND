@@ -4,11 +4,12 @@ var TCTs= require('../../models/tcts');
 var TCTmembers = require('../../models/tctMembers')
 var notifications = require("../../models/notification");
 const { isValidObjectId } = require('mongoose');
+const mongoose = require('mongoose');
 
 router.post("/", (req, res, next) => {
     const { title, description } = req.body;
     const owner = req.session.user_Oid;
-    
+
     const newRequest = new TCTs({
         owner: owner,
         title: title,
@@ -45,12 +46,12 @@ router.get("/my-project", async (req, res, next) => {
         });
         console.log(myProject);
         res.json(myProject);
-   
+
 });
 
 /* 승인 된 프로젝트 넘버와 소속 멤버를 저장 */
 const addTcTMembers = async (_id, userID) => {
-        
+
     const newMembers = new TCTmembers({
         id: userID,
         TcTnum : _id
@@ -62,15 +63,20 @@ const addTcTMembers = async (_id, userID) => {
         return false;
     }
     else {
-        console.log(result);
+        console.log("addTcTMembers",result);
         console.log("success to add members");
         return true;
     }
 }
 
+router.post("/invite", function(req,res,next){
+  const tctnum = new mongoose.Types.ObjectId(req.body.TcTnum);
+  addTcTMembers(tctnum, req.session.user_Oid);
+});
+
 /* 승인 메세지를 전송 */
 const sendApproveNotification = async (_id, owner) => {
-    
+
     const approveNotification = new notifications({
         TcTnum: _id,
         sender: "manager",
@@ -94,14 +100,14 @@ const sendApproveNotification = async (_id, owner) => {
 
 /* 프로젝트 승인 */
 router.post("/approve", async (req, res, next) => {
-    
+
     const _id = req.body._id;
     const owner = req.body.owner;
     const approve = { $set: { status: "A" } };
     let updateState;
 
     try {
-         //tct 프로젝트 status 업데이트 (S -> A)        
+         //tct 프로젝트 status 업데이트 (S -> A)
         const result = await TCTs.updateOne({ _id: _id }, approve);
 
         if (!result) {
@@ -113,7 +119,7 @@ router.post("/approve", async (req, res, next) => {
             console.log(`${_id} project is successfully approved`);
             updateState = true;
         }
-        
+
         let sendNotificationStatus = await sendApproveNotification(_id, owner);
         let addTcTMembersStatus = await addTcTMembers(_id, owner);
 
@@ -123,8 +129,8 @@ router.post("/approve", async (req, res, next) => {
         }
         else {
             res.json(false);
-        }  
-        
+        }
+
     } catch (e) {
         console.log(e);
     }
