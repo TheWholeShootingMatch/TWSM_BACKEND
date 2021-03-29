@@ -38,14 +38,8 @@ router.get("/", async (req, res, next) => {
 });
 
 router.get("/my-project", async (req, res, next) => {
-        const myProject = await TCTs.find({ owner: req.session.user_Oid, status: "A" }, err => {
-            if (err) {
-                console.log("fail to request notifications", err);
-            }
-        });
-        console.log(myProject);
-        res.json(myProject);
-   
+    const myProjects = await TCTmembers.find({ id: req.session.user_Oid }).populate('TcTnum');
+    res.json(myProjects);
 });
 
 /* 승인 된 프로젝트 넘버와 소속 멤버를 저장 */

@@ -11,7 +11,9 @@ router.post("/", async (req, res, next) => {
     // 3. 프로젝트 고유 번호가 TCT에 존재하는지 확인
 
     if (req.session.isLogin) {
-        const isTcTMember = await TcTMembers.find({ id: req.session.user_Oid, TcTnum: req.body.TcTnum }, (err) => {
+        const O_id = new mongoose.Types.ObjectId(req.session.user_Oid);
+        const TcTnum = new mongoose.Types.ObjectId(req.body.TcTnum);
+        const isTcTMember = await TcTMembers.find({ id:O_id, TcTnum:TcTnum }, (err) => {
             if (err) {
                 res.json(false);
             }
