@@ -46,12 +46,23 @@ router.get("/my-project", async (req, res, next) => {
 /* 승인 된 프로젝트 넘버와 소속 멤버를 저장 */
 const addTcTMembers = async (_id, userID) => {
 
-    const newMembers = new TCTmembers({
+    // const newMembers = new TCTmembers({
+    //     id: userID,
+    //     TcTnum : _id
+    // })
+
+    /* 초대된 다른 멤버들도 추가할 수 있도록 함 */
+    let result = await TCTmembers.findOneAndUpdate(
+      {TcTnum: _id, id: userID},
+      {
         id: userID,
         TcTnum : _id
-    })
-    /* 초대된 다른 멤버들도 추가할 수 있도록 함 */
-    let result = await newMembers.save();
+      },
+      {
+        upsert:true
+      }
+    );
+
     if (!result) {
         console.log("fail to add members");
         return false;
