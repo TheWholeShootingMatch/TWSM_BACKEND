@@ -3,10 +3,25 @@
 /**
  * Module dependencies.
  */
-
-var app = require('../app');
+var { app, sessionMiddleware } = require('../app');
 var debug = require('debug')('twsm-backend:server');
 var http = require('http');
+var Y = require('yjs');
+var sharedsession = require("express-socket.io-session");
+var { fromUint8Array, toUint8Array } = require('js-base64');
+
+const { MongodbPersistence } = require('y-mongodb');
+const location = process.env.DB_HOST;
+const collection = 'yjs-transactions';
+const mdb = new MongodbPersistence(location, collection);
+const redis = require("redis");
+
+const client = redis.createClient(
+  {
+    host: "13.124.192.207",
+    port: 6379,
+    db: 0
+  });
 
 /**
  * Get port from environment and store in Express.
@@ -28,7 +43,8 @@ var server = http.createServer(app);
 const mongoose = require('mongoose');
 var TCTs = require('../models/tcts');
 
- const NEW_SELECT_EVENT = "newSelect";
+const NEW_SELECT_EVENT = "newSelect";
+const NEW_PEER_EVENT = "newPeer";
 
  const io = require("socket.io")(server, {
    cors: {
@@ -36,63 +52,93 @@ var TCTs = require('../models/tcts');
    },
  });
 
- io.on("connection", (socket) => {
+io.use(sharedsession(sessionMiddleware, {
+  autoSave: true
+}));
 
-   // Join a conversation
-   const { roomId } = socket.handshake.query;
-   socket.join(roomId);
+io.on("connection", (socket) => {
 
-   // Listen for new messages
-   socket.on(NEW_SELECT_EVENT, (data) => {
-     const tctnum = new mongoose.Types.ObjectId("600e4e20cfd1ee389c8c3fd0");
+  // Join a conversation
+  const { roomId } = socket.handshake.query;
 
-     let update = {};
-     if (data.type === 'M') {
-       update = {
-         $addToSet: {models : data.body}
-       };
+  socket.join(roomId);
+  // Listen for new messages
+  socket.on(NEW_SELECT_EVENT, (data) => {
+    const tctnum = new mongoose.Types.ObjectId("600e4e20cfd1ee389c8c3fd0");
 
-       if (data.func === 'D') {
-         update = {
-           $pull: {models : data.body}
-         };
-       }
-     }
-     else {
-       update = {
-         $addToSet: {photographers : data.body}
-       };
+    let update = {};
+    if (data.type === 'M') {
+      update = {
+        $addToSet: { models: data.body }
+      };
 
-       if (data.func === 'D') {
-         update = {
-           $pull: {photographers : data.body}
-         };
-       }
-     }
+      if (data.func === 'D') {
+        update = {
+          $pull: { models: data.body }
+        };
+      }
+    }
+    else {
+      update = {
+        $addToSet: { photographers: data.body }
+      };
 
-     TCTs.findOneAndUpdate(
-       { _id:tctnum },
-       update,
-       err => {
-         if (err) throw err;
-       }
-     );
+      if (data.func === 'D') {
+        update = {
+          $pull: { photographers: data.body }
+        };
+      }
+    }
 
-     io.in(roomId).emit(NEW_SELECT_EVENT, data);
-   });
+    TCTs.findOneAndUpdate(
+      { _id: tctnum },
+      update,
+      err => {
+        if (err) throw err;
+      }
+    );
 
-   // Server will apply the changes on its document
-   // and broadcast to everyone in room
-   socket.on("canvasEvent", (data) => {
-     console.log(data);
-     io.in(roomId).emit("canvasEvent", data);
-   });
+    io.in(roomId).emit(NEW_SELECT_EVENT, data);
+  });
 
-   // Leave the room if the user closes the socket
-   socket.on("disconnect", () => {
-     socket.leave(roomId);
-   });
- });
+  // Server will apply the changes on its document
+  // and broadcast to everyone in room
+  socket.on("canvasEvent", (data) => {
+    //data is unit8array
+    const updatedYdoc = fromUint8Array(data); //base64
+    client.set("604061c3a2002256e051cf6d", updatedYdoc);
+    io.in(roomId).emit("canvasEvent", data);
+  });
+
+  // Leave the room if the user closes the socket
+  socket.on("disconnect", async () => {
+    const room = io.sockets.adapter.rooms.get(roomId);
+    //"room" undefiend means room is empty
+    if (!room) {
+      client.get("604061c3a2002256e051cf6d", (err, redisPersistedYdoc) => {
+        if (redisPersistedYdoc) {
+          const encodePersistedYdoc = toUint8Array(redisPersistedYdoc); //unit8array
+          mdb.storeUpdate("604061c3a2002256e051cf6d", encodePersistedYdoc); //마지막 redis 정보를 디비에 저장
+        }
+      })
+    }
+    // else {
+    //   io.in(roomId).emit(New_PEER_EVENT, room.length);
+    // }
+  });
+
+  socket.on(NEW_PEER_EVENT, () => {
+    // client.set("test", "1");
+    // console.log(socket.handshake);
+    // socket.handshake.session.reload(function (data) {
+    //   console.log(data);
+      // this will give you the update session info
+    
+      // const room = io.sockets.adapter.rooms.get(roomId); 
+      // io.in(roomId).emit(New_PEER_EVENT, room.length);
+    // });
+  })
+});
 
 server.listen(port);
 server.on('error', onError);
