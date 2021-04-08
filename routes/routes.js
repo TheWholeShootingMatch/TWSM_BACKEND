@@ -12,6 +12,7 @@ var whiteboard = require("./whiteboard");
 var collaborations = require("./collaboration/collaboration");
 var tct = require("./tct/tct");
 var tctmember = require("./tct/tctmember");
+var tctversion = require("./tct/tctversion");
 
 module.exports = function(app){
     app.use("/api/index", index);
@@ -28,6 +29,8 @@ module.exports = function(app){
     app.use("/api/notification", notification);
     app.use("/api/whiteboard", whiteboard);
     app.use("/api/collaboration", collaborations);
+    app.use("/api/tctversion", tctversion);
+    
     app.use(function(err, req, res, next) {
         // set locals, only providing error in development
         res.locals.message = err.message;

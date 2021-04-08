@@ -45,13 +45,20 @@ router.post("/", async (req, res, next) => {
         else {
             client.get(req.body.TcTnum, async (err, redisPersistedYdoc) => {
                 if (redisPersistedYdoc) {
-                    res.send(redisPersistedYdoc);
+                    res.send({
+                        base64Ydoc: redisPersistedYdoc,
+                        title: project[0].title
+                    });
                 }
                 else {
                     const mongoPersistedYdoc = await mdb.getYDoc(req.body.TcTnum); //mongodb에서 doc을 가져옴
                     const unit8arrayYdoc = Y.encodeStateAsUpdate(mongoPersistedYdoc);
-                    const base64Ydoc = fromUint8Array(unit8arrayYdoc)
-                    res.send(base64Ydoc);
+                    const base64Ydoc = fromUint8Array(unit8arrayYdoc);
+                    console.log(project[0].title, base64Ydoc);
+                    res.send({
+                        base64Ydoc: base64Ydoc,
+                        title: project[0].title
+                    });
                 }
             });           
         }
@@ -60,6 +67,22 @@ router.post("/", async (req, res, next) => {
         res.send(false);
     }
 });
+
+router.post('/title', async (req, res, next) => {
+    
+    const TcTnum = new mongoose.Types.ObjectId(req.body.TcTnum);
+    const title = { $set: { title: req.body.titleInputs } }; //타이틀 변경
+    
+    await TCTs.updateOne({ _id: TcTnum }, title, err => {
+        if (err) {
+            console.log("fail to change title");
+        }
+        else {
+            console.log(`${req.body.TcTnum} title is successfully changed`);
+            return res.json(true);
+        }
+    });
+})
 
 // router.post('/whiteboard', async (req, res, next) => {
 //     const persistedYdoc = await ldb.getYDoc(req.body.suffix);
