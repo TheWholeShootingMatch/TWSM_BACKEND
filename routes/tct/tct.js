@@ -10,13 +10,13 @@ const collection = 'yjs-transactions';
 const mdb = new MongodbPersistence(location, collection);
 const redis = require("redis");
 
-const client = redis.createClient(
+const whiteboard = redis.createClient(
   {
     host: "13.124.192.207",
     port: 6379,
     db: 0
-  });
-
+    });
+  
 var { fromUint8Array } = require('js-base64');
 
 router.post("/", async (req, res, next) => {
@@ -43,7 +43,7 @@ router.post("/", async (req, res, next) => {
             res.send(false);
         }
         else {
-            client.get(req.body.TcTnum, async (err, redisPersistedYdoc) => {
+            whiteboard.get(req.body.TcTnum, async (err, redisPersistedYdoc) => {
                 if (redisPersistedYdoc) {
                     res.send({
                         base64Ydoc: redisPersistedYdoc,
@@ -54,7 +54,7 @@ router.post("/", async (req, res, next) => {
                     const mongoPersistedYdoc = await mdb.getYDoc(req.body.TcTnum); //mongodb에서 doc을 가져옴
                     const unit8arrayYdoc = Y.encodeStateAsUpdate(mongoPersistedYdoc);
                     const base64Ydoc = fromUint8Array(unit8arrayYdoc);
-                    console.log(project[0].title, base64Ydoc);
+                    console.log(project[0].title);
                     res.send({
                         base64Ydoc: base64Ydoc,
                         title: project[0].title

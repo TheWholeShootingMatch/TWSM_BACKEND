@@ -5,7 +5,6 @@ var { app, sessionMiddleware } = require('../app');
 var debug = require('debug')('twsm-backend:server');
 var http = require('http');
 var Y = require('yjs');
-var sharedsession = require("express-socket.io-session");
 var { fromUint8Array, toUint8Array } = require('js-base64');
 const { MongodbPersistence } = require('y-mongodb');
 
@@ -20,11 +19,15 @@ const mvdb =  new MongodbPersistence(location, versionCollection);
 
 /* redis */
 const redis = require("redis");
+const whiteboard = redis.createClient(
+  {
+    host: "13.124.192.207",
+    port: 6379,
+  });
 const client = redis.createClient(
   {
     host: "13.124.192.207",
     port: 6379,
-    db: 0
   });
 
 /**
@@ -48,21 +51,24 @@ const NEW_SELECT_EVENT = "newSelect";
 const PEER_INIT_EVENT = "peerInitEvent";
 const PEER_CONNECT_EVENT = "peerConnectEvent";
 const PEER_DISCONNECT_EVENT = "peerDisconnectEvent";
+const COLORS = [
+  '#fff100',
+  '#ff8c00',
+  '#e81123',
+  '#ec008c',
+  '#68217a',
+  '#00188f',	
+  '#00b294',	
+  '#009e49',	
+  '#bad80a',
+  '#00bcf2'	
+]
 
  const io = require("socket.io")(server, {
    cors: {
      origin: "*",
    },
  });
-
-io.use(sharedsession(sessionMiddleware, {
-  autoSave: true
-}));
-
-// io.engine.generateId = function (req) {
-//     // generate a new custom id here
-//     return 1
-// }
 
 io.on("connection", (socket) => {
 
@@ -116,7 +122,7 @@ io.on("connection", (socket) => {
     console.log("canvasEvent", input.type);
     if (input.type === "addObj" || input.type === "clearDoc") {
       const updatedYdoc = fromUint8Array(input.data); //base64
-      client.set(roomId, updatedYdoc);
+      whiteboard.set(roomId, updatedYdoc);
     }
     io.in(roomId).emit("canvasEvent", input.data);
   });
@@ -126,22 +132,31 @@ io.on("connection", (socket) => {
     const versionDoc = await mvdb.getYDoc(docName);
     const encodeVersionDoc = Y.encodeStateAsUpdate(versionDoc);
     const updatedYdoc = fromUint8Array(encodeVersionDoc); //base64
-    client.set(roomId, updatedYdoc);
+    whiteboard.set(roomId, updatedYdoc);
     io.in(roomId).emit("versionEvent", encodeVersionDoc);
   })
 
   socket.on("emitLastYDoc", (data) => {
     console.log("emitLastYDoc", roomId);
     const updatedYdoc = fromUint8Array(data); //base64
-    client.set(roomId, updatedYdoc);
+    whiteboard.set(roomId, updatedYdoc);
   })
 
   // Leave the room if the user closes the socket
   socket.on("disconnect", () => {
     const room = io.sockets.adapter.rooms.get(roomId);
-    //"room" undefiend means room is empty
+    //remove client from redis
+    client.get(roomId + "-connectedUsers", async (err, connectedUserList) => {
+      if (connectedUserList) {
+        const connectedList = JSON.parse(connectedUserList);
+        console.log(socket.id);
+        const newList = connectedList.filter((list) => list.socketId !== socket.id);
+        client.set(roomId + "-connectedUsers", JSON.stringify(newList));
+      }
+    });
+    //"room" undefiend means room is empty    
     if (!room) {
-      client.get(roomId, async(err, redisPersistedYdoc) => {
+      whiteboard.get(roomId, async(err, redisPersistedYdoc) => {
         if (redisPersistedYdoc) {
           console.log("disconnect");
           const encodePersistedYdoc = toUint8Array(redisPersistedYdoc); //unit8array
@@ -149,25 +164,29 @@ io.on("connection", (socket) => {
           await mdb.flushDocument(roomId);
         }
       })
+      client.del(roomId + "-connectedUsers");
     }
     else {
       io.in(roomId).emit(PEER_DISCONNECT_EVENT, socket.id);
     }
   });
 
-  socket.on(PEER_CONNECT_EVENT, () => {
-    const client = Array.from(io.sockets.adapter.rooms.get(roomId));
-    io.in(roomId).emit(PEER_CONNECT_EVENT, client);
-    // io.in(roomId).emit(NEW_PEER_EVENT, clients);
-    // client.set("test", "1");
-    // console.log(socket.handshake);
-    // socket.handshake.session.reload(function (data) {
-    //   console.log(data);
-      // this will give you the update session info
-    
-      // const room = io.sockets.adapter.rooms.get(roomId); 
-      // io.in(roomId).emit(New_PEER_EVENT, room.length);
-    // });
+  socket.on(PEER_CONNECT_EVENT, (data) => {
+    client.get(roomId + "-connectedUsers", async (err, connectedUserList) => {
+      if (connectedUserList) {
+        const newList = JSON.parse(connectedUserList);
+        const usedColors = newList.map((user) => user.color);
+        const availableColors = COLORS.filter((color) => !usedColors.includes(color));
+        newList.push({ id: data.id, socketId: socket.id, color: availableColors[0] });
+        console.log(newList);
+        client.set(roomId + "-connectedUsers", JSON.stringify(newList));
+        io.in(roomId).emit(PEER_CONNECT_EVENT, newList);
+      }
+      else {
+        const newList = [{ id: data.id, socketId: socket.id, color: COLORS[0] }];
+        client.set(roomId + "-connectedUsers", JSON.stringify(newList));
+      }
+    })
   })
 });
 

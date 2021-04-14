@@ -11,7 +11,7 @@ router.get('/', function(req, res, next) {
 router.get('/login', function(req, res, next) {
   if(req.session.isLogin) {
     console.log(req.session.isLogin, req.session.user_id);
-    res.send(req.session.isLogin);
+    res.send(req.session.user_id);
   } else {
     res.send(false);
   }
