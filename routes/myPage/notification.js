@@ -35,4 +35,23 @@ router.post("/fetch", async (req, res, next) => {
     }
 });
 
+router.post("/invite", function(req,res,next){
+  console.log("data recieved");
+  const now =new Date().getTime().toString()
+
+  let noti = new notification({
+    TcTnum: req.body.TcTnum,
+    sender: req.session.user_Oid,
+    receiver: req.body.id,
+    sendTime:now,
+    type:'B',
+    status:false
+  });
+
+  noti.save(err => {
+    if (err) throw err;
+    res.json({ success: true });
+  });
+});
+
 module.exports = router;

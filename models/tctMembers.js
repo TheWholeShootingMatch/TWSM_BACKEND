@@ -8,8 +8,9 @@ const TCTmembersSchema = new Schema({
         required: true,
     },
     TcTnum: {
-        type: String,
-        required: true,
+        type: mongoose.SchemaTypes.ObjectId,
+        ref: "TCT",
+        required: true
     }
 });
 

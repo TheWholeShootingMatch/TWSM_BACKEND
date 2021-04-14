@@ -1,34 +1,53 @@
 #!/usr/bin/env node
 
-/**
- * Module dependencies.
- */
-
-var app = require('../app');
+/* Module dependencies */
+var { app, sessionMiddleware } = require('../app');
 var debug = require('debug')('twsm-backend:server');
 var http = require('http');
+var Y = require('yjs');
+var sharedsession = require("express-socket.io-session");
+var { fromUint8Array, toUint8Array } = require('js-base64');
+const { MongodbPersistence } = require('y-mongodb');
+
+/* mdb : mongodb doc */
+const location = process.env.DB_HOST;
+const collection = 'yjs-transactions';
+const mdb = new MongodbPersistence(location, collection);
+
+/* mvdb : mongodb version doc  */
+const versionCollection = 'yjs-versions';
+const mvdb =  new MongodbPersistence(location, versionCollection);
+
+/* redis */
+const redis = require("redis");
+const client = redis.createClient(
+  {
+    host: "13.124.192.207",
+    port: 6379,
+    db: 0
+  });
 
 /**
  * Get port from environment and store in Express.
  */
-
 var port = normalizePort(process.env.PORT || '3001');
 app.set('port', port);
 
 /**
  * Create HTTP server.
  */
-
 var server = http.createServer(app);
 
 /**
  * Listen on provided port, on all network interfaces.
  */
-
 const mongoose = require('mongoose');
 var TCTs = require('../models/tcts');
 
- const NEW_SELECT_EVENT = "newSelect";
+const NEW_SELECT_EVENT = "newSelect";
+const PEER_INIT_EVENT = "peerInitEvent";
+const PEER_CONNECT_EVENT = "peerConnectEvent";
+const PEER_DISCONNECT_EVENT = "peerDisconnectEvent";
 
  const io = require("socket.io")(server, {
    cors: {
@@ -36,56 +55,121 @@ var TCTs = require('../models/tcts');
    },
  });
 
- io.on("connection", (socket) => {
+io.use(sharedsession(sessionMiddleware, {
+  autoSave: true
+}));
 
-   // Join a conversation
-   const { roomId } = socket.handshake.query;
-   socket.join(roomId);
+// io.engine.generateId = function (req) {
+//     // generate a new custom id here
+//     return 1
+// }
 
-   // Listen for new messages
-   socket.on(NEW_SELECT_EVENT, (data) => {
-     const tctnum = new mongoose.Types.ObjectId("600e4e20cfd1ee389c8c3fd0");
+io.on("connection", (socket) => {
 
-     let update = {};
-     if (data.type === 'M') {
-       update = {
-         $addToSet: {models : data.body}
-       };
+  // Join a conversation
+  const { roomId } = socket.handshake.query;
 
-       if (data.func === 'D') {
-         update = {
-           $pull: {models : data.body}
-         };
-       }
-     }
-     else {
-       update = {
-         $addToSet: {photographers : data.body}
-       };
+  socket.join(roomId);
 
-       if (data.func === 'D') {
-         update = {
-           $pull: {photographers : data.body}
-         };
-       }
-     }
+  // Listen for new messages
+  socket.on(NEW_SELECT_EVENT, (data) => {
+    const tctnum = new mongoose.Types.ObjectId("600e4e20cfd1ee389c8c3fd0");
 
-     TCTs.findOneAndUpdate(
-       { _id:tctnum },
-       update,
-       err => {
-         if (err) throw err;
-       }
-     );
+    let update = {};
+    if (data.type === 'M') {
+      update = {
+        $addToSet: { models: data.body }
+      };
 
-     io.in(roomId).emit(NEW_SELECT_EVENT, data);
-   });
+      if (data.func === 'D') {
+        update = {
+          $pull: { models: data.body }
+        };
+      }
+    }
+    else {
+      update = {
+        $addToSet: { photographers: data.body }
+      };
 
-   // Leave the room if the user closes the socket
-   socket.on("disconnect", () => {
-     socket.leave(roomId);
-   });
- });
+      if (data.func === 'D') {
+        update = {
+          $pull: { photographers: data.body }
+        };
+      }
+    }
+
+    TCTs.findOneAndUpdate(
+      { _id: tctnum },
+      update,
+      err => {
+        if (err) throw err;
+      }
+    );
+
+    io.in(roomId).emit(NEW_SELECT_EVENT, data);
+  });
+
+  // Server will apply the changes on its document
+  // and broadcast to everyone in room
+  socket.on("canvasEvent", (input) => {
+    console.log("canvasEvent", input.type);
+    if (input.type === "addObj" || input.type === "clearDoc") {
+      const updatedYdoc = fromUint8Array(input.data); //base64
+      client.set(roomId, updatedYdoc);
+    }
+    io.in(roomId).emit("canvasEvent", input.data);
+  });
+
+  socket.on("emitVersionDoc", async (docName) => {
+    console.log("emitVersionDoc", docName);
+    const versionDoc = await mvdb.getYDoc(docName);
+    const encodeVersionDoc = Y.encodeStateAsUpdate(versionDoc);
+    const updatedYdoc = fromUint8Array(encodeVersionDoc); //base64
+    client.set(roomId, updatedYdoc);
+    io.in(roomId).emit("versionEvent", encodeVersionDoc);
+  })
+
+  socket.on("emitLastYDoc", (data) => {
+    console.log("emitLastYDoc", roomId);
+    const updatedYdoc = fromUint8Array(data); //base64
+    client.set(roomId, updatedYdoc);
+  })
+
+  // Leave the room if the user closes the socket
+  socket.on("disconnect", () => {
+    const room = io.sockets.adapter.rooms.get(roomId);
+    //"room" undefiend means room is empty
+    if (!room) {
+      client.get(roomId, async(err, redisPersistedYdoc) => {
+        if (redisPersistedYdoc) {
+          console.log("disconnect");
+          const encodePersistedYdoc = toUint8Array(redisPersistedYdoc); //unit8array
+          mdb.storeUpdate(roomId, encodePersistedYdoc); //마지막 redis 정보를 디비에 저장
+          await mdb.flushDocument(roomId);
+        }
+      })
+    }
+    else {
+      io.in(roomId).emit(PEER_DISCONNECT_EVENT, socket.id);
+    }
+  });
+
+  socket.on(PEER_CONNECT_EVENT, () => {
+    const client = Array.from(io.sockets.adapter.rooms.get(roomId));
+    io.in(roomId).emit(PEER_CONNECT_EVENT, client);
+    // io.in(roomId).emit(NEW_PEER_EVENT, clients);
+    // client.set("test", "1");
+    // console.log(socket.handshake);
+    // socket.handshake.session.reload(function (data) {
+    //   console.log(data);
+      // this will give you the update session info
+    
+      // const room = io.sockets.adapter.rooms.get(roomId); 
+      // io.in(roomId).emit(New_PEER_EVENT, room.length);
+    // });
+  })
+});
 
 server.listen(port);
 server.on('error', onError);

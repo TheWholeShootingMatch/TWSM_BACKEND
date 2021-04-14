@@ -3,6 +3,21 @@ var router = express.Router();
 var TCTs = require('../../models/tcts');
 var TcTMembers = require('../../models/tctMembers');
 const mongoose = require('mongoose');
+var Y = require('yjs');
+const { MongodbPersistence } = require('y-mongodb');
+const location = process.env.DB_HOST;
+const collection = 'yjs-transactions';
+const mdb = new MongodbPersistence(location, collection);
+const redis = require("redis");
+
+const client = redis.createClient(
+  {
+    host: "13.124.192.207",
+    port: 6379,
+    db: 0
+  });
+
+var { fromUint8Array } = require('js-base64');
 
 router.post("/", async (req, res, next) => {
 
@@ -11,30 +26,69 @@ router.post("/", async (req, res, next) => {
     // 3. 프로젝트 고유 번호가 TCT에 존재하는지 확인
 
     if (req.session.isLogin) {
-        const isTcTMember = await TcTMembers.find({ id: req.session.user_Oid, TcTnum: req.body.TcTnum }, (err) => {
+        const O_id = new mongoose.Types.ObjectId(req.session.user_Oid);
+        const TcTnum = new mongoose.Types.ObjectId(req.body.TcTnum);
+        const isTcTMember = await TcTMembers.find({ id:O_id, TcTnum:TcTnum }, (err) => {
             if (err) {
-                res.json(false);
+                res.send(false);
             }
         })
         const project = await TCTs.find({ _id: req.body.TcTnum , status: "A" }, (err) => {
             if (err) {
-                res.json(false);
+                res.send(false);
             }
         });
 
-        console.log(isTcTMember);
-
         if (project.length === 0 || isTcTMember.length === 0) {
-            res.json(false);
+            res.send(false);
         }
         else {
-            res.json(true);
+            client.get(req.body.TcTnum, async (err, redisPersistedYdoc) => {
+                if (redisPersistedYdoc) {
+                    res.send({
+                        base64Ydoc: redisPersistedYdoc,
+                        title: project[0].title
+                    });
+                }
+                else {
+                    const mongoPersistedYdoc = await mdb.getYDoc(req.body.TcTnum); //mongodb에서 doc을 가져옴
+                    const unit8arrayYdoc = Y.encodeStateAsUpdate(mongoPersistedYdoc);
+                    const base64Ydoc = fromUint8Array(unit8arrayYdoc);
+                    console.log(project[0].title, base64Ydoc);
+                    res.send({
+                        base64Ydoc: base64Ydoc,
+                        title: project[0].title
+                    });
+                }
+            });           
         }
     }
     else {
         res.send(false);
     }
 });
+
+router.post('/title', async (req, res, next) => {
+    
+    const TcTnum = new mongoose.Types.ObjectId(req.body.TcTnum);
+    const title = { $set: { title: req.body.titleInputs } }; //타이틀 변경
+    
+    await TCTs.updateOne({ _id: TcTnum }, title, err => {
+        if (err) {
+            console.log("fail to change title");
+        }
+        else {
+            console.log(`${req.body.TcTnum} title is successfully changed`);
+            return res.json(true);
+        }
+    });
+})
+
+// router.post('/whiteboard', async (req, res, next) => {
+//     const persistedYdoc = await ldb.getYDoc(req.body.suffix);
+//     const encodingYdoc = Y.encodeStateAsUpdate(persistedYdoc);
+//     res.send(encodingYdoc);
+// })
 
 router.post('/model', async (req, res, next) => {
   const tctnum = new mongoose.Types.ObjectId("600e4e20cfd1ee389c8c3fd0");
