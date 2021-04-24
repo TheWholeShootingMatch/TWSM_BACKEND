@@ -13,8 +13,8 @@ const redis = require("redis");
 const whiteboard = redis.createClient(
   {
     host: "13.124.192.207",
-    port: 6379,
-    db: 0
+        port: 6379,
+        password: process.env.REDIS_KEY
     });
   
 var { fromUint8Array } = require('js-base64');

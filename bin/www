@@ -23,11 +23,13 @@ const whiteboard = redis.createClient(
   {
     host: "13.124.192.207",
     port: 6379,
+    password : process.env.REDIS_KEY
   });
 const client = redis.createClient(
   {
     host: "13.124.192.207",
     port: 6379,
+    password: process.env.REDIS_KEY
   });
 
 /**
@@ -133,7 +135,7 @@ io.on("connection", (socket) => {
     const encodeVersionDoc = Y.encodeStateAsUpdate(versionDoc);
     const updatedYdoc = fromUint8Array(encodeVersionDoc); //base64
     whiteboard.set(roomId, updatedYdoc);
-    io.in(roomId).emit("versionEvent", encodeVersionDoc);
+    io.in(roomId).emit("versionEvent", updatedYdoc);
   })
 
   socket.on("emitLastYDoc", (data) => {
