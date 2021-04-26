@@ -31,6 +31,7 @@ router.get("/searchForUid", async (req, res, next) => {
 
 //// for model
 router.post("/", async (req, res, next) => {
+  console.log(req.body.find)
   const models = await Model
   .find(req.body.find, (err) => {
     if(err) {

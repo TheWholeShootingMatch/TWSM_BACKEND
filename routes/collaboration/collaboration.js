@@ -3,11 +3,15 @@ var router = express.Router();
 var Collaboration = require("../../models/corllaborate_projects");
 
 router.post("/", async (req, res, next) => {
-    const collaborates = await Collaboration.find(req.body.find, (err) => {
-      if (err) {
-        console.log(err);
-      }
-    })
+    console.log(req.body);
+    console.log(req.body.find);
+
+    const collaborates = await Collaboration.find().
+    // const collaborates = await Collaboration.find(req.body.find, (err) => {
+    //   if (err) {
+    //     console.log(err);
+    //   }
+    // })
     .sort(req.body.sort)
     res.json(collaborates);
 });
