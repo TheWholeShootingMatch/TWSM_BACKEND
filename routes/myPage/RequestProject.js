@@ -7,7 +7,7 @@ const { isValidObjectId } = require('mongoose');
 const mongoose = require('mongoose');
 
 router.post("/", (req, res, next) => {
-    const { title, description } = req.body;
+    const { title, description, user } = req.body;
     const owner = req.session.user_Oid;
 
     const newRequest = new TCTs({
@@ -18,10 +18,15 @@ router.post("/", (req, res, next) => {
         request_time: new Date()
     });
 
+    user.map((elem) => {
+      addTcTMembers(newRequest._id, elem);
+    });
+
     newRequest.save(err => {
         if (err) throw err;
         return res.send(true);
     });
+
 });
 
 router.get("/", async (req, res, next) => {
@@ -103,6 +108,22 @@ const sendApproveNotification = async (_id, owner) => {
     }
 }
 
+const inviteMember = async(_id, owner, user) => {
+
+  const noti = new notifications({
+    TcTnum: _id,
+    sender: owner,
+    receiver: user,
+    sendTime: new Date().getTime(),
+    type:'B',
+    status:false
+  });
+
+  noti.save(err => {
+    return true;
+  });
+}
+
 /* 프로젝트 승인 */
 router.post("/approve", async (req, res, next) => {
 
@@ -127,6 +148,13 @@ router.post("/approve", async (req, res, next) => {
 
         let sendNotificationStatus = await sendApproveNotification(_id, owner);
         let addTcTMembersStatus = await addTcTMembers(_id, owner);
+
+        const members = await TCTmembers.find({ TcTnum:_id });
+        members.map((elem) => {
+          if (elem.id !== owner) {
+            inviteMember(_id, owner, elem.id);
+          }
+        })
 
         if (sendNotificationStatus && addTcTMembersStatus && updateState) {
             console.log(sendNotificationStatus, addTcTMembersStatus, updateState);
