@@ -25,7 +25,10 @@ const userSchema = new Schema({
     fav_photographers: [{
         type: mongoose.SchemaTypes.ObjectId,
         ref: "photographer"
-    }]
+    }],
+    status: {
+        type: Boolean
+    }
 });
 
 module.exports = mongoose.model("User", userSchema);

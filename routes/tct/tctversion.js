@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
 const { MongodbPersistence } = require('y-mongodb');
+const mongoose = require('mongoose');
 const location = process.env.DB_HOST;
 const collection = 'yjs-versions';
 const mdb = new MongodbPersistence(location, collection);
@@ -32,9 +33,11 @@ router.post("/", async (req, res, next) => {
 })
 
 router.post("/fetch", async (req, res, next) => {
-  const versions = await TCTversions.find({TcTnum:req.body.tctNum});
-  console.log(versions);
-  res.json(versions);
+    const tctnum = new mongoose.Types.ObjectId(req.body.tctNum);
+    console.log("version", tctnum);
+    const versions = await TCTversions.find({ TcTnum: tctnum });
+    console.log(versions);
+    res.json(versions);
 });
 
 module.exports = router;

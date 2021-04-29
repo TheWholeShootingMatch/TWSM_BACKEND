@@ -34,13 +34,14 @@ router.get("/", async (req, res, next) => {
 
     //관리자에게 요청이 온 프로젝트 (승인 여부 : 상관 무)
     if (req.session.user_id === "manager") {
-        requested_project = await TCTs.find({});
+        requested_project = await TCTs.find({}).populate('owner', 'id');
     }
     //유저가 요청한 프로젝트 (승인 여부 : S)
     else {
         requested_project = await TCTs.find({ owner: req.session.user_Oid, status: "S" });
     }
     res.json(requested_project);
+    res.json([]);
 });
 
 router.get("/my-project", async (req, res, next) => {
@@ -85,25 +86,25 @@ router.post("/invite", function(req,res,next){
 });
 
 /* 승인 메세지를 전송 */
-const sendApproveNotification = async (_id, owner) => {
+const sendNotification = async (_id, owner, type) => {
 
-    const approveNotification = new notifications({
+    const notification = new notifications({
         TcTnum: _id,
         sender: "manager",
         receiver: owner,
         sendTime: new Date().getTime(),
-        type: "A",
+        type: type,
         status: true,
     });
 
-    let result = await approveNotification.save();
+    let result = await notification.save();
     if (!result) {
-        console.log("fail to send approve notification");
+        console.log("fail to send notification");
         return false;
     }
     else {
         console.log(result);
-        console.log(`success to send approve notification`);
+        console.log(`success to send notification`);
         return true;
     }
 }
@@ -146,7 +147,7 @@ router.post("/approve", async (req, res, next) => {
             updateState = true;
         }
 
-        let sendNotificationStatus = await sendApproveNotification(_id, owner);
+        let sendNotificationStatus = await sendNotification(_id, owner, "A");
         let addTcTMembersStatus = await addTcTMembers(_id, owner);
 
         const members = await TCTs.find({ _id:_id });
@@ -168,5 +169,44 @@ router.post("/approve", async (req, res, next) => {
         console.log(e);
     }
 })
+
+
+/* 프로젝트 거절 */
+router.post("/deny", async (req, res, next) => {
+
+    const _id = req.body._id;
+    const owner = req.body.owner;
+    const deny = { $set: { status: "D" } };
+    let updateState;
+
+    try {
+         //tct 프로젝트 status 업데이트 (S -> D)
+        const result = await TCTs.updateOne({ _id: _id }, deny);
+
+        if (!result) {
+            console.log("fail to deny project");
+            updateState = false;
+        }
+        else {
+            console.log(result);
+            console.log(`${_id} project is successfully denied`);
+            updateState = true;
+        }
+
+        let sendNotificationStatus = await sendNotification(_id, owner, "D");
+
+        if (sendNotificationStatus && updateState) {
+            console.log(sendNotificationStatus, updateState);
+            res.json(true);
+        }
+        else {
+            res.json(false);
+        }
+
+    } catch (e) {
+        console.log(e);
+    }
+})
+
 
 module.exports = router;

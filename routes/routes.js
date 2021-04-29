@@ -13,6 +13,7 @@ var collaborations = require("./collaboration/collaboration");
 var tct = require("./tct/tct");
 var tctmember = require("./tct/tctmember");
 var tctversion = require("./tct/tctversion");
+var bookmark = require("./myPage/bookmark");
 
 module.exports = function(app){
     app.use("/api/index", index);
@@ -30,6 +31,7 @@ module.exports = function(app){
     app.use("/api/whiteboard", whiteboard);
     app.use("/api/collaboration", collaborations);
     app.use("/api/tctversion", tctversion);
+    app.use("/api/bookmark", bookmark);
 
     app.use(function(err, req, res, next) {
         // set locals, only providing error in development
