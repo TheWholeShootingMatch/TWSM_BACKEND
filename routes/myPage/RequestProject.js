@@ -18,9 +18,9 @@ router.post("/", (req, res, next) => {
         request_time: new Date()
     });
 
-    user.map((elem) => {
-      addTcTMembers(newRequest._id, elem);
-    });
+    if (user !== null && user !== "" && user !== undefined) {
+      newRequest.initMembers = user;
+    }
 
     newRequest.save(err => {
         if (err) throw err;
@@ -149,10 +149,10 @@ router.post("/approve", async (req, res, next) => {
         let sendNotificationStatus = await sendApproveNotification(_id, owner);
         let addTcTMembersStatus = await addTcTMembers(_id, owner);
 
-        const members = await TCTmembers.find({ TcTnum:_id });
-        members.map((elem) => {
+        const members = await TCTs.find({ _id:_id });
+        members[0].initMembers.map((elem) => {
           if (elem.id !== owner) {
-            inviteMember(_id, owner, elem.id);
+            inviteMember(_id, owner, elem);
           }
         })
 

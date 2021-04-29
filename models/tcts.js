@@ -30,7 +30,11 @@ const TcTSchema = new Schema({
     photographers : [{
         type: mongoose.SchemaTypes.ObjectId,
         ref: "photographer"
-    }]
+    }],
+    initMembers : [{
+        type: mongoose.SchemaTypes.ObjectId,
+        ref: "User"
+    }],
 });
 
 module.exports = mongoose.model("TCT", TcTSchema);

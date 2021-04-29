@@ -30,7 +30,7 @@ module.exports = function(app){
     app.use("/api/whiteboard", whiteboard);
     app.use("/api/collaboration", collaborations);
     app.use("/api/tctversion", tctversion);
-    
+
     app.use(function(err, req, res, next) {
         // set locals, only providing error in development
         res.locals.message = err.message;

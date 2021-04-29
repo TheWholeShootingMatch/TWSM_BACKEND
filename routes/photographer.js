@@ -4,6 +4,7 @@ var AWS = require('aws-sdk');
 var multer  = require('multer')
 var multerS3 = require('multer-s3');
 var Photographer = require('../models/photographer');
+var Portfolio = require('../models/portfolioP');
 
 require('dotenv').config({ path: '.env' });
 
@@ -103,6 +104,49 @@ router.post('/new', upload, async (req, res, next) => {
       return res.json({ success: true });
     }
   );
+});
+
+//for portfolio
+
+router.post('/portfolioNew', upload, async (req, res, next) => {
+  console.log("data received");
+  const update = {
+    id: req.session.user_Oid,
+  };
+
+  if (req.file != null) {
+    update.link = req.file.location;
+  }
+
+  await Portfolio.findOneAndUpdate(
+    { id:req.session.user_Oid },
+    update,
+    {
+      upsert:true
+    },
+    err => {
+      if (err) throw err;
+      return res.json({ success: true });
+    }
+  );
+});
+
+router.get("/portfolioUid", async (req, res, next) => {
+  const portfolio = await Portfolio.findOne({ Uid:req.session.user_Oid }, (err) => {
+    if(err) {
+      console.log(err);
+    }
+  });
+  res.json(portfolio);
+});
+
+router.post("/portfolio", async (req, res, next) => {
+  const portfolio = await Portfolio.findOne({ id:req.body.id }, (err) => {
+    if(err) {
+      console.log(err);
+    }
+  });
+  res.json(portfolio);
 });
 
 module.exports = router;
