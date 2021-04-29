@@ -2,11 +2,6 @@ var express = require('express');
 var router = express.Router();
 var User = require('../models/users');
 
-/* GET users listing. */
-router.get('/', function(req, res, next) {
-  res.send("/");
-})
-
 /* login이 되어있는지 확인*/
 router.get('/login', function(req, res, next) {
   if(req.session.isLogin) {
@@ -36,10 +31,15 @@ router.post("/login", function(req,res,next){
         res.send({id:''});  //id ===""일 경우 변화 없음..
       }
       else {
+        var status = user.status;
         var dbPassword = user.pwd;
         var inputPassword = req.body.password;
 
-        if (dbPassword === inputPassword) {
+        if (status) {
+          console.log('blocked user!')
+          res.send({ id: '' }); //blocked user일 경우
+        }
+        else if (dbPassword === inputPassword) {
           console.log('비밀번호 일치');
           req.session.isLogin = true;
           req.session.user_id = req.body.id;
@@ -76,7 +76,8 @@ router.post("/signup", function(req,res,next){
             id:req.body.id,
             name:req.body.name,
             pwd: req.body.password,
-            email: req.body.email
+            email: req.body.email,
+            status: false
           });
           newUser.save();
           res.send({isSignup: true, log:"signup ok"});
@@ -172,5 +173,57 @@ router.post("/fav_photographers_del", function(req,res,next){
     }
   );
 });
+
+router.get('/user-list', async function (req, res, next) {
+  userList = await User.find({}, { id: true, name: true, email: true, status: true, _id: false });
+  if (userList) {
+    res.json(userList);
+  }
+  else {
+    res.json([]);
+  }
+})
+
+router.post('/restore', async function (req, res, next) {
+  const id = req.body.id;
+  const status = { $set: { status: false } };
+
+  try {
+    const result = await User.updateOne({ id: id }, status);
+    if (!result) {
+      console.log("fail to restore user");
+      res.json(false);
+    }
+    else {
+      console.log("succeed to restore user");
+      res.json(true);
+    }
+  } catch (e) {
+    console.log(e);
+    res.json(false);
+  }
+})
+
+router.post('/block', async function (req, res, next) {
+  const id = req.body.id;
+  const status = { $set: { status: true } };
+
+  try {
+    const result = await User.updateOne({ id: id }, status);
+    if (!result) {
+      console.log("fail to block user");
+      res.json(false);
+    }
+    else {
+      console.log("succeed to block user");
+      res.json(true);
+    }
+  } catch (e) {
+    console.log(e);
+    res.json(false);
+  }
+})
+
+
 
 module.exports = router;
