@@ -144,6 +144,11 @@ io.on("connection", (socket) => {
     whiteboard.set(roomId, updatedYdoc);
   })
 
+  socket.on("objectEvent", (data) => {
+    socket.broadcast.to(roomId).emit("objectEvent", data);
+    // io.in(roomId).except(socket.id).emit("objectEvent", data);
+  })
+
   // Leave the room if the user closes the socket
   socket.on("disconnect", () => {
     const room = io.sockets.adapter.rooms.get(roomId);
@@ -178,13 +183,13 @@ io.on("connection", (socket) => {
         const newList = JSON.parse(connectedUserList);
         const usedColors = newList.map((user) => user.color);
         const availableColors = COLORS.filter((color) => !usedColors.includes(color));
-        newList.push({ id: data.id, socketId: socket.id, color: availableColors[0] });
+        newList.push({ name: data.name, socketId: socket.id, color: availableColors[0] });
         console.log(newList);
         client.set(roomId + "-connectedUsers", JSON.stringify(newList));
         io.in(roomId).emit(PEER_CONNECT_EVENT, newList);
       }
       else {
-        const newList = [{ id: data.id, socketId: socket.id, color: COLORS[0] }];
+        const newList = [{ name: data.name, socketId: socket.id, color: COLORS[0] }];
         client.set(roomId + "-connectedUsers", JSON.stringify(newList));
       }
     })

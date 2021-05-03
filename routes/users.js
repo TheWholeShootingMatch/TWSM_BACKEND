@@ -5,8 +5,7 @@ var User = require('../models/users');
 /* login이 되어있는지 확인*/
 router.get('/login', function(req, res, next) {
   if(req.session.isLogin) {
-    console.log(req.session.isLogin, req.session.user_id);
-    res.send(req.session.user_id);
+    res.send(req.session.user_name);
   } else {
     res.send(false);
   }
@@ -37,18 +36,19 @@ router.post("/login", function(req,res,next){
 
         if (status) {
           console.log('blocked user!')
-          res.send({ id: '' }); //blocked user일 경우
+          res.send({ name: '' }); //blocked user일 경우
         }
         else if (dbPassword === inputPassword) {
           console.log('비밀번호 일치');
           req.session.isLogin = true;
           req.session.user_id = req.body.id;
           req.session.user_Oid = user._id;
-          res.send({id: req.session.user_id});
+          req.session.user_name = user.name;
+          res.send({name: req.session.user_name});
         }
         else {
           console.log('비밀번호 불일치');
-          res.send({id: ''});
+          res.send({name: ''});
         }
       }
     });
