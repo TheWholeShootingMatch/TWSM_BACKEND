@@ -54,16 +54,16 @@ const PEER_INIT_EVENT = "peerInitEvent";
 const PEER_CONNECT_EVENT = "peerConnectEvent";
 const PEER_DISCONNECT_EVENT = "peerDisconnectEvent";
 const COLORS = [
-  '#fff100',
-  '#ff8c00',
-  '#e81123',
-  '#ec008c',
-  '#68217a',
-  '#00188f',
-  '#00b294',
-  '#009e49',
-  '#bad80a',
-  '#00bcf2'
+  '#8AD2D8',
+  '#C6A68E',
+  '#558AA4',
+  '#F15E3D',
+  '#56704B',
+  '#CC3B7C',
+  '#005594',
+  '#89B65A',
+  '#EBC98E',
+  '#EFCB5E'
 ]
 
  const io = require("socket.io")(server, {
