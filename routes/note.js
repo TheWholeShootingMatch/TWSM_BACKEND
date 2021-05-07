@@ -17,10 +17,9 @@ router.post("/fetch", async (req, res, next) => {
 router.post("/", function(req,res,next){
   console.log("data recieved");
   const now = new Date();
-  const tctnum = new mongoose.Types.ObjectId("600e6a885933af1a8c68aae3");
 
   let log = new Log({
-    TcTnum: tctnum,
+    TcTnum: req.body.TcTnum,
     writer: req.session.user_Oid,
     category:req.body.category,
     title:req.body.title,
