@@ -58,11 +58,11 @@ const COLORS = [
   '#558AA4',
   '#F15E3D',
   '#56704B',
-  '#CC3B7C',	
-  '#005594',	
-  '#89B65A',	
+  '#CC3B7C',
+  '#005594',
+  '#89B65A',
   '#EBC98E',
-  '#EFCB5E'	
+  '#EFCB5E'
 ]
 
  const io = require("socket.io")(server, {
@@ -78,9 +78,11 @@ io.on("connection", (socket) => {
 
   socket.join(roomId);
 
+  console.log("roomId",roomId);
+
   // Listen for new messages
   socket.on(NEW_SELECT_EVENT, (data) => {
-    const tctnum = new mongoose.Types.ObjectId(data.TcTnum);
+    const tctnum = new mongoose.Types.ObjectId(roomId);
 
     let update = {};
     if (data.type === 'M') {
@@ -158,7 +160,7 @@ io.on("connection", (socket) => {
         client.set(roomId + "-connectedUsers", JSON.stringify(newList));
       }
     });
-    //"room" undefiend means room is empty    
+    //"room" undefiend means room is empty
     if (!room) {
       whiteboard.get(roomId, async(err, redisPersistedYdoc) => {
         if (redisPersistedYdoc) {

@@ -16,7 +16,7 @@ const whiteboard = redis.createClient(
         port: 6379,
         password: process.env.REDIS_KEY
     });
-  
+
 var { fromUint8Array } = require('js-base64');
 
 router.post("/", async (req, res, next) => {
@@ -60,7 +60,7 @@ router.post("/", async (req, res, next) => {
                         title: project[0].title
                     });
                 }
-            });           
+            });
         }
     }
     else {
@@ -69,10 +69,10 @@ router.post("/", async (req, res, next) => {
 });
 
 router.post('/title', async (req, res, next) => {
-    
+
     const TcTnum = new mongoose.Types.ObjectId(req.body.TcTnum);
     const title = { $set: { title: req.body.titleInputs } }; //타이틀 변경
-    
+
     await TCTs.updateOne({ _id: TcTnum }, title, err => {
         if (err) {
             console.log("fail to change title");
@@ -94,7 +94,7 @@ router.post('/model', async (req, res, next) => {
   const tctnum = new mongoose.Types.ObjectId(req.body.TcTnum);
 
   const models = await TCTs
-  .findOne({ _id:tctnum })
+  .findOne({ _id:req.body.TcTnum })
   .select('models')
   .populate('models')
 
@@ -105,7 +105,7 @@ router.post('/photographer', async (req, res, next) => {
   const tctnum = new mongoose.Types.ObjectId(req.body.TcTnum);
 
   const photographers = await TCTs
-  .findOne({ _id:tctnum })
+  .findOne({ _id:req.body.TcTnum })
   .select('photographers')
   .populate('photographers')
 
