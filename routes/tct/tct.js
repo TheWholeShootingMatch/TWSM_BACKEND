@@ -91,7 +91,7 @@ router.post('/title', async (req, res, next) => {
 // })
 
 router.post('/model', async (req, res, next) => {
-  const tctnum = new mongoose.Types.ObjectId("600e4e20cfd1ee389c8c3fd0");
+  const tctnum = new mongoose.Types.ObjectId(req.body.TcTnum);
 
   const models = await TCTs
   .findOne({ _id:tctnum })
@@ -102,7 +102,7 @@ router.post('/model', async (req, res, next) => {
 });
 
 router.post('/photographer', async (req, res, next) => {
-  const tctnum = new mongoose.Types.ObjectId("600e4e20cfd1ee389c8c3fd0");
+  const tctnum = new mongoose.Types.ObjectId(req.body.TcTnum);
 
   const photographers = await TCTs
   .findOne({ _id:tctnum })

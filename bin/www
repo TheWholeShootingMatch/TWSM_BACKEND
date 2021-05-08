@@ -48,7 +48,6 @@ var server = http.createServer(app);
  */
 const mongoose = require('mongoose');
 var TCTs = require('../models/tcts');
-
 const NEW_SELECT_EVENT = "newSelect";
 const PEER_INIT_EVENT = "peerInitEvent";
 const PEER_CONNECT_EVENT = "peerConnectEvent";
@@ -81,7 +80,7 @@ io.on("connection", (socket) => {
 
   // Listen for new messages
   socket.on(NEW_SELECT_EVENT, (data) => {
-    const tctnum = new mongoose.Types.ObjectId("600e4e20cfd1ee389c8c3fd0");
+    const tctnum = new mongoose.Types.ObjectId(data.TcTnum);
 
     let update = {};
     if (data.type === 'M') {
@@ -121,27 +120,26 @@ io.on("connection", (socket) => {
   // Server will apply the changes on its document
   // and broadcast to everyone in room
   socket.on("canvasEvent", (input) => {
-    console.log("canvasEvent", input.type);
     if (input.type === "addObj" || input.type === "clearDoc") {
-      const updatedYdoc = fromUint8Array(input.data); //base64
-      whiteboard.set(roomId, updatedYdoc);
+      whiteboard.set(roomId, input.data);
+      io.in(roomId).emit("canvasEvent", input.data);
     }
-    io.in(roomId).emit("canvasEvent", input.data);
+    else if (input.type === "modifiedObj") {
+      whiteboard.set(roomId, input.data);
+      socket.broadcast.to(roomId).emit("objectEvent", input.data);
+    }
   });
 
+  socket.on("drawElementEvent", (input) => {
+    socket.broadcast.to(roomId).emit("drawElementEvent", input);
+  })
+  
   socket.on("emitVersionDoc", async (docName) => {
-    console.log("emitVersionDoc", docName);
     const versionDoc = await mvdb.getYDoc(docName);
     const encodeVersionDoc = Y.encodeStateAsUpdate(versionDoc);
     const updatedYdoc = fromUint8Array(encodeVersionDoc); //base64
     whiteboard.set(roomId, updatedYdoc);
     io.in(roomId).emit("versionEvent", updatedYdoc);
-  })
-
-  socket.on("emitLastYDoc", (data) => {
-    console.log("emitLastYDoc", roomId);
-    const updatedYdoc = fromUint8Array(data); //base64
-    whiteboard.set(roomId, updatedYdoc);
   })
 
   socket.on("objectEvent", (data) => {
@@ -156,7 +154,6 @@ io.on("connection", (socket) => {
     client.get(roomId + "-connectedUsers", async (err, connectedUserList) => {
       if (connectedUserList) {
         const connectedList = JSON.parse(connectedUserList);
-        console.log(socket.id);
         const newList = connectedList.filter((list) => list.socketId !== socket.id);
         client.set(roomId + "-connectedUsers", JSON.stringify(newList));
       }
@@ -165,9 +162,9 @@ io.on("connection", (socket) => {
     if (!room) {
       whiteboard.get(roomId, async(err, redisPersistedYdoc) => {
         if (redisPersistedYdoc) {
-          const encodePersistedYdoc = toUint8Array(redisPersistedYdoc); //unit8array
-          mdb.storeUpdate(roomId, encodePersistedYdoc); //마지막 redis 정보를 디비에 저장
-          await mdb.flushDocument(roomId);
+          // const encodePersistedYdoc = toUint8Array(redisPersistedYdoc); //unit8array
+          // mdb.storeUpdate(roomId, encodePersistedYdoc); //마지막 redis 정보를 디비에 저장
+          // await mdb.flushDocument(roomId);
         }
       })
       client.del(roomId + "-connectedUsers");
@@ -184,7 +181,6 @@ io.on("connection", (socket) => {
         const usedColors = newList.map((user) => user.color);
         const availableColors = COLORS.filter((color) => !usedColors.includes(color));
         newList.push({ name: data.name, socketId: socket.id, color: availableColors[0] });
-        console.log(newList);
         client.set(roomId + "-connectedUsers", JSON.stringify(newList));
         io.in(roomId).emit(PEER_CONNECT_EVENT, newList);
       }
