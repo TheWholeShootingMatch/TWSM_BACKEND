@@ -4,8 +4,9 @@ var User = require('../models/users');
 
 /* login이 되어있는지 확인*/
 router.get('/login', function(req, res, next) {
-  if(req.session.isLogin) {
-    res.send(req.session.user_name);
+  if (req.session.isLogin) {
+    const isManager = req.session.user_id === "manager" ? true : false;
+    res.send({ "name": req.session.user_name, "isManager": isManager });
   } else {
     res.send(false);
   }
