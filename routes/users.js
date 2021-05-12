@@ -225,9 +225,14 @@ router.post('/block', async function (req, res, next) {
   }
 })
 
-router.get('/mypage', function(req, res, next) {
-  const my = User.findOne({id:req.body.id});
+router.get("/mypage", async (req, res, next) => {
+  const my = await User.findOne({ _id:req.session.user_Oid }, (err) => {
+    if(err) {
+      console.log(err);
+    }
+  });
   res.json(my);
 });
+
 
 module.exports = router;
