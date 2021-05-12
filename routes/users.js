@@ -225,6 +225,9 @@ router.post('/block', async function (req, res, next) {
   }
 })
 
-
+router.get('/mypage', function(req, res, next) {
+  const my = User.findOne({id:req.body.id});
+  res.json(my);
+});
 
 module.exports = router;
