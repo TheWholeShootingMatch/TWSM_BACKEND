@@ -78,8 +78,6 @@ io.on("connection", (socket) => {
 
   socket.join(roomId);
 
-  console.log("roomId",roomId);
-
   // Listen for new messages
   socket.on(NEW_SELECT_EVENT, (data) => {
     const tctnum = new mongoose.Types.ObjectId(roomId);
@@ -128,13 +126,9 @@ io.on("connection", (socket) => {
     }
     else if (input.type === "modifiedObj") {
       whiteboard.set(roomId, input.data);
-      socket.broadcast.to(roomId).emit("objectEvent", input.data);
+      socket.broadcast.to(roomId).emit("canvasEvent", input.data);
     }
   });
-
-  socket.on("drawElementEvent", (input) => {
-    socket.broadcast.to(roomId).emit("drawElementEvent", input);
-  })
   
   socket.on("emitVersionDoc", async (docName) => {
     const versionDoc = await mvdb.getYDoc(docName);
@@ -146,7 +140,6 @@ io.on("connection", (socket) => {
 
   socket.on("objectEvent", (data) => {
     socket.broadcast.to(roomId).emit("objectEvent", data);
-    // io.in(roomId).except(socket.id).emit("objectEvent", data);
   })
 
   // Leave the room if the user closes the socket
@@ -164,9 +157,11 @@ io.on("connection", (socket) => {
     if (!room) {
       whiteboard.get(roomId, async(err, redisPersistedYdoc) => {
         if (redisPersistedYdoc) {
-          // const encodePersistedYdoc = toUint8Array(redisPersistedYdoc); //unit8array
-          // mdb.storeUpdate(roomId, encodePersistedYdoc); //마지막 redis 정보를 디비에 저장
-          // await mdb.flushDocument(roomId);
+          const encodePersistedYdoc = toUint8Array(redisPersistedYdoc); //unit8array
+          mdb.storeUpdate(roomId, encodePersistedYdoc); //마지막 redis 정보를 디비에 저장
+          await mdb.flushDocument(roomId);
+          whiteboard.del(roomId); //redis 정보를 삭제
+          console.log("successfully store last ydoc data");
         }
       })
       client.del(roomId + "-connectedUsers");
