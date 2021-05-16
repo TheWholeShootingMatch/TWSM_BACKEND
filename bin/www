@@ -1,42 +1,40 @@
 #!/usr/bin/env node
 
 /* Module dependencies */
-var { app, sessionMiddleware } = require('../app');
-var debug = require('debug')('twsm-backend:server');
-var http = require('http');
-var Y = require('yjs');
-var { fromUint8Array, toUint8Array } = require('js-base64');
-const { MongodbPersistence } = require('y-mongodb');
+var { app, sessionMiddleware } = require("../app");
+var debug = require("debug")("twsm-backend:server");
+var http = require("http");
+var Y = require("yjs");
+var { fromUint8Array, toUint8Array } = require("js-base64");
+const { MongodbPersistence } = require("y-mongodb");
 
 /* mdb : mongodb doc */
 const location = process.env.DB_HOST;
-const collection = 'yjs-transactions';
+const collection = "yjs-transactions";
 const mdb = new MongodbPersistence(location, collection);
 
 /* mvdb : mongodb version doc  */
-const versionCollection = 'yjs-versions';
-const mvdb =  new MongodbPersistence(location, versionCollection);
+const versionCollection = "yjs-versions";
+const mvdb = new MongodbPersistence(location, versionCollection);
 
 /* redis */
 const redis = require("redis");
-const whiteboard = redis.createClient(
-  {
-    host: "13.124.192.207",
-    port: 6379,
-    password : process.env.REDIS_KEY
-  });
-const client = redis.createClient(
-  {
+const whiteboard = redis.createClient({
     host: "13.124.192.207",
     port: 6379,
     password: process.env.REDIS_KEY
-  });
+});
+const client = redis.createClient({
+    host: "13.124.192.207",
+    port: 6379,
+    password: process.env.REDIS_KEY
+});
 
 /**
  * Get port from environment and store in Express.
  */
-var port = normalizePort(process.env.PORT || '3001');
-app.set('port', port);
+var port = normalizePort(process.env.PORT || "3001");
+app.set("port", port);
 
 /**
  * Create HTTP server.
@@ -46,171 +44,177 @@ var server = http.createServer(app);
 /**
  * Listen on provided port, on all network interfaces.
  */
-const mongoose = require('mongoose');
-var TCTs = require('../models/tcts');
+const mongoose = require("mongoose");
+var TCTs = require("../models/tcts");
+const { CloudWatchEvents } = require("aws-sdk");
 const NEW_SELECT_EVENT = "newSelect";
 const PEER_INIT_EVENT = "peerInitEvent";
 const PEER_CONNECT_EVENT = "peerConnectEvent";
 const PEER_DISCONNECT_EVENT = "peerDisconnectEvent";
 const COLORS = [
-  '#8AD2D8',
-  '#C6A68E',
-  '#558AA4',
-  '#F15E3D',
-  '#56704B',
-  '#CC3B7C',
-  '#005594',
-  '#89B65A',
-  '#EBC98E',
-  '#EFCB5E'
-]
+    "#8AD2D8",
+    "#C6A68E",
+    "#558AA4",
+    "#F15E3D",
+    "#56704B",
+    "#CC3B7C",
+    "#005594",
+    "#89B65A",
+    "#EBC98E",
+    "#EFCB5E"
+];
 
- const io = require("socket.io")(server, {
-   cors: {
-     origin: "*",
-   },
- });
-
-io.on("connection", (socket) => {
-
-  // Join a conversation
-  const { roomId } = socket.handshake.query;
-
-  socket.join(roomId);
-
-  // Listen for new messages
-  socket.on(NEW_SELECT_EVENT, (data) => {
-    const tctnum = new mongoose.Types.ObjectId(roomId);
-
-    let update = {};
-    if (data.type === 'M') {
-      update = {
-        $addToSet: { models: data.body }
-      };
-
-      if (data.func === 'D') {
-        update = {
-          $pull: { models: data.body }
-        };
-      }
+const io = require("socket.io")(server, {
+    cors: {
+        origin: "*"
     }
-    else {
-      update = {
-        $addToSet: { photographers: data.body }
-      };
+});
 
-      if (data.func === 'D') {
-        update = {
-          $pull: { photographers: data.body }
-        };
-      }
-    }
+io.on("connection", socket => {
+    // Join a conversation
+    const { roomId } = socket.handshake.query;
 
-    TCTs.findOneAndUpdate(
-      { _id: tctnum },
-      update,
-      err => {
-        if (err) throw err;
-      }
-    );
+    socket.join(roomId);
 
-    io.in(roomId).emit(NEW_SELECT_EVENT, data);
-  });
+    // Listen for new messages
+    socket.on(NEW_SELECT_EVENT, data => {
+        const tctnum = new mongoose.Types.ObjectId(roomId);
 
-  // Server will apply the changes on its document
-  // and broadcast to everyone in room
-  socket.on("canvasEvent", (input) => {
-    if (input.type === "addObj" || input.type === "clearDoc") {
-      whiteboard.set(roomId, input.data);
-      io.in(roomId).emit("canvasEvent", input.data);
-    }
-    else if (input.type === "modifiedObj") {
-      whiteboard.set(roomId, input.data);
-      socket.broadcast.to(roomId).emit("canvasEvent", input.data);
-    }
-  });
-  
-  socket.on("emitVersionDoc", async (docName) => {
-    const versionDoc = await mvdb.getYDoc(docName);
-    const encodeVersionDoc = Y.encodeStateAsUpdate(versionDoc);
-    const updatedYdoc = fromUint8Array(encodeVersionDoc); //base64
-    whiteboard.set(roomId, updatedYdoc);
-    io.in(roomId).emit("versionEvent", updatedYdoc);
-  })
+        let update = {};
+        if (data.type === "M") {
+            update = {
+                $addToSet: { models: data.body }
+            };
 
-  socket.on("objectEvent", (data) => {
-    socket.broadcast.to(roomId).emit("objectEvent", data);
-  })
+            if (data.func === "D") {
+                update = {
+                    $pull: { models: data.body }
+                };
+            }
+        } else {
+            update = {
+                $addToSet: { photographers: data.body }
+            };
 
-  // Leave the room if the user closes the socket
-  socket.on("disconnect", () => {
-    const room = io.sockets.adapter.rooms.get(roomId);
-    //remove client from redis
-    client.get(roomId + "-connectedUsers", async (err, connectedUserList) => {
-      if (connectedUserList) {
-        const connectedList = JSON.parse(connectedUserList);
-        const newList = connectedList.filter((list) => list.socketId !== socket.id);
-        client.set(roomId + "-connectedUsers", JSON.stringify(newList));
-      }
-    });
-    //"room" undefiend means room is empty
-    if (!room) {
-      whiteboard.get(roomId, async(err, redisPersistedYdoc) => {
-        if (redisPersistedYdoc) {
-          const encodePersistedYdoc = toUint8Array(redisPersistedYdoc); //unit8array
-          mdb.storeUpdate(roomId, encodePersistedYdoc); //마지막 redis 정보를 디비에 저장
-          await mdb.flushDocument(roomId);
-          whiteboard.del(roomId); //redis 정보를 삭제
-          console.log("successfully store last ydoc data");
+            if (data.func === "D") {
+                update = {
+                    $pull: { photographers: data.body }
+                };
+            }
         }
-      })
-      client.del(roomId + "-connectedUsers");
-    }
-    else {
-      io.in(roomId).emit(PEER_DISCONNECT_EVENT, socket.id);
-    }
-  });
 
-  socket.on(PEER_CONNECT_EVENT, (data) => {
-    client.get(roomId + "-connectedUsers", async (err, connectedUserList) => {
-      if (connectedUserList) {
-        const newList = JSON.parse(connectedUserList);
-        const usedColors = newList.map((user) => user.color);
-        const availableColors = COLORS.filter((color) => !usedColors.includes(color));
-        newList.push({ name: data.name, socketId: socket.id, color: availableColors[0] });
-        client.set(roomId + "-connectedUsers", JSON.stringify(newList));
-        io.in(roomId).emit(PEER_CONNECT_EVENT, newList);
-      }
-      else {
-        const newList = [{ name: data.name, socketId: socket.id, color: COLORS[0] }];
-        client.set(roomId + "-connectedUsers", JSON.stringify(newList));
-      }
-    })
-  })
+        TCTs.findOneAndUpdate({ _id: tctnum }, update, err => {
+            if (err) throw err;
+        });
+
+        io.in(roomId).emit(NEW_SELECT_EVENT, data);
+    });
+
+    // Server will apply the changes on its document
+    // and broadcast to everyone in room
+    socket.on("canvasEvent", input => {
+        if (input.type === "addObj" || input.type === "clearDoc") {
+            whiteboard.set(roomId, input.data);
+            io.in(roomId).emit("canvasEvent", input.data);
+        } else if (input.type === "modifiedObj") {
+            whiteboard.set(roomId, input.data);
+            socket.broadcast.to(roomId).emit("canvasEvent", input.data);
+        }
+    });
+
+    socket.on("emitVersionDoc", async docName => {
+        const versionDoc = await mvdb.getYDoc(docName);
+        const encodeVersionDoc = Y.encodeStateAsUpdate(versionDoc);
+        const updatedYdoc = fromUint8Array(encodeVersionDoc); //base64
+        whiteboard.set(roomId, updatedYdoc);
+        io.in(roomId).emit("versionEvent", updatedYdoc);
+    });
+
+    socket.on("objectEvent", data => {
+        socket.broadcast.to(roomId).emit("objectEvent", data);
+    });
+
+    // Leave the room if the user closes the socket
+    socket.on("disconnect", () => {
+        const room = io.sockets.adapter.rooms.get(roomId);
+        //remove client from redis
+        client.get(roomId + "-connectedUsers", async (err, connectedUserList) => {
+            if (connectedUserList) {
+                const connectedList = JSON.parse(connectedUserList);
+                const newList = connectedList.filter(list => list.socketId !== socket.id);
+                client.set(roomId + "-connectedUsers", JSON.stringify(newList));
+            }
+        });
+        //"room" undefiend means room is empty
+        if (!room) {
+            whiteboard.get(roomId, async (err, redisPersistedYdoc) => {
+                if (redisPersistedYdoc) {
+                    console.log("try to store last redis information");
+                    try {
+                        const encodePersistedYdoc = toUint8Array(redisPersistedYdoc); //unit8array
+                        mdb.storeUpdate(roomId, encodePersistedYdoc); //마지막 redis 정보를 디비에 저장
+                        await mdb.flushDocument(roomId);
+                        console.log("successfully store last ydoc data");
+                        whiteboard.del(roomId); //redis 정보를 삭제
+                    } catch (e) {
+                        console.log("fail to store last redis");
+                    }
+                }
+            });
+        } else {
+            io.in(roomId).emit(PEER_DISCONNECT_EVENT, socket.id);
+        }
+    });
+
+    socket.on(PEER_CONNECT_EVENT, data => {
+        client.get(roomId + "-connectedUsers", async (err, connectedUserList) => {
+            if (connectedUserList) {
+                const newList = JSON.parse(connectedUserList);
+                const usedColors = newList.map(user => user.color);
+                const availableColors = COLORS.filter(color => !usedColors.includes(color));
+                newList.push({
+                    name: data.name,
+                    socketId: socket.id,
+                    color: availableColors[0]
+                });
+                client.set(roomId + "-connectedUsers", JSON.stringify(newList));
+                io.in(roomId).emit(PEER_CONNECT_EVENT, newList);
+            } else {
+                const newList = [
+                    {
+                        name: data.name,
+                        socketId: socket.id,
+                        color: COLORS[0]
+                    }
+                ];
+                client.set(roomId + "-connectedUsers", JSON.stringify(newList));
+            }
+        });
+    });
 });
 
 server.listen(port);
-server.on('error', onError);
-server.on('listening', onListening);
+server.on("error", onError);
+server.on("listening", onListening);
 
 /**
  * Normalize a port into a number, string, or false.
  */
 
 function normalizePort(val) {
-  var port = parseInt(val, 10);
+    var port = parseInt(val, 10);
 
-  if (isNaN(port)) {
-    // named pipe
-    return val;
-  }
+    if (isNaN(port)) {
+        // named pipe
+        return val;
+    }
 
-  if (port >= 0) {
-    // port number
-    return port;
-  }
+    if (port >= 0) {
+        // port number
+        return port;
+    }
 
-  return false;
+    return false;
 }
 
 /**
@@ -218,27 +222,25 @@ function normalizePort(val) {
  */
 
 function onError(error) {
-  if (error.syscall !== 'listen') {
-    throw error;
-  }
+    if (error.syscall !== "listen") {
+        throw error;
+    }
 
-  var bind = typeof port === 'string'
-    ? 'Pipe ' + port
-    : 'Port ' + port;
+    var bind = typeof port === "string" ? "Pipe " + port : "Port " + port;
 
-  // handle specific listen errors with friendly messages
-  switch (error.code) {
-    case 'EACCES':
-      console.error(bind + ' requires elevated privileges');
-      process.exit(1);
-      break;
-    case 'EADDRINUSE':
-      console.error(bind + ' is already in use');
-      process.exit(1);
-      break;
-    default:
-      throw error;
-  }
+    // handle specific listen errors with friendly messages
+    switch (error.code) {
+        case "EACCES":
+            console.error(bind + " requires elevated privileges");
+            process.exit(1);
+            break;
+        case "EADDRINUSE":
+            console.error(bind + " is already in use");
+            process.exit(1);
+            break;
+        default:
+            throw error;
+    }
 }
 
 /**
@@ -246,9 +248,7 @@ function onError(error) {
  */
 
 function onListening() {
-  var addr = server.address();
-  var bind = typeof addr === 'string'
-    ? 'pipe ' + addr
-    : 'port ' + addr.port;
-  debug('Listening on ' + bind);
+    var addr = server.address();
+    var bind = typeof addr === "string" ? "pipe " + addr : "port " + addr.port;
+    debug("Listening on " + bind);
 }
