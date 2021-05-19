@@ -17,7 +17,6 @@ const whiteboard = redis.createClient({
 });
 
 var { fromUint8Array } = require("js-base64");
-const { createCatchClause } = require("typescript");
 
 router.post("/", async (req, res, next) => {
     // 1. 로그인 상태인지 확인

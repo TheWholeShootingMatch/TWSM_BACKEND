@@ -18,7 +18,7 @@
     "multer": "^1.4.2",
     "multer-s3": "^2.9.0",
     "pug": "2.0.0-beta11",
-    "redis": "^3.1.0",
+    "redis": "^3.1.2",
     "session-file-store": "^1.5.0",
     "socket.io": "^3.1.1",
     "y-mongodb": "^0.1.11",

@@ -1,6 +1,6 @@
 var express = require('express');
 var router = express.Router();
-var Collaboration = require("../../models/corllaborate_projects");
+var Collaboration = require("../models/corllaborate_projects");
 
 router.post("/", async (req, res, next) => {
     console.log(req.body);
