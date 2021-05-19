@@ -115,6 +115,7 @@ io.on("connection", socket => {
     socket.on("canvasEvent", input => {
         if (input.type === "addObj" || input.type === "clearDoc") {
             whiteboard.set(roomId, input.data);
+            socket.broadcast.to(roomId).emit("canvasEvent", input.data);
             io.in(roomId).emit("canvasEvent", input.data);
         } else if (input.type === "modifiedObj") {
             whiteboard.set(roomId, input.data);
