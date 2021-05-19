@@ -8,7 +8,6 @@ router.get("/", async (req, res, next) => {
             console.log("fail to request notifications",err);
         }
     });
-    console.log(notifications);
     res.json(notifications);
 });
 
@@ -41,7 +40,7 @@ router.post("/invite", function(req,res,next){
 
   let noti = new notification({
     TcTnum: req.body.TcTnum,
-    sender: req.session.user_Oid,
+    sender: req.session.user_name,
     receiver: req.body.id,
     sendTime:now,
     type:'B',
