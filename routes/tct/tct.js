@@ -26,23 +26,15 @@ router.post("/", async (req, res, next) => {
     if (req.session.isLogin) {
         const O_id = new mongoose.Types.ObjectId(req.session.user_Oid);
         const TcTnum = new mongoose.Types.ObjectId(req.body.TcTnum);
-        const isTcTMember = await TcTMembers.find({ id: O_id, TcTnum: TcTnum }, err => {
-            if (err) {
-                res.send(false);
-            }
-        });
-        const project = await TCTs.find({ _id: req.body.TcTnum, status: "A" }, err => {
-            if (err) {
-                res.send(false);
-            }
-        });
+        const isTcTMember = await TcTMembers.find({ id: O_id, TcTnum: TcTnum });
+        const project = await TCTs.find({ _id: req.body.TcTnum, status: "A" });
 
         if (project.length === 0 || isTcTMember.length === 0) {
-            res.send(false);
+            return res.send(false);
         } else {
             whiteboard.get(req.body.TcTnum, async (err, redisPersistedYdoc) => {
                 if (redisPersistedYdoc) {
-                    res.send({
+                    return res.send({
                         base64Ydoc: redisPersistedYdoc,
                         title: project[0].title
                     });
@@ -54,20 +46,20 @@ router.post("/", async (req, res, next) => {
                             const unit8arrayYdoc = Y.encodeStateAsUpdate(mongoPersistedYdoc);
                             const base64Ydoc = fromUint8Array(unit8arrayYdoc);
                             console.log("successfully connect collaboration tool");
-                            res.send({
+                            return res.send({
                                 base64Ydoc: base64Ydoc,
                                 title: project[0].title
                             });
                         } catch (e) {
                             console.log("fail to encode collaboration toool");
-                            res.send({
+                            return res.send({
                                 base64Ydoc: "",
                                 title: project[0].title
                             });
                         }
                     } else {
                         console.log("fail to connect collaboration toool");
-                        res.send({
+                        return res.send({
                             base64Ydoc: "",
                             title: project[0].title
                         });
@@ -76,7 +68,7 @@ router.post("/", async (req, res, next) => {
             });
         }
     } else {
-        res.send(false);
+        return res.send(false);
     }
 });
 
