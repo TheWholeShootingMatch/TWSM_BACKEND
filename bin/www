@@ -110,15 +110,18 @@ io.on("connection", socket => {
         io.in(roomId).emit(NEW_SELECT_EVENT, data);
     });
 
+    const broadCastExceptSender = (action, data) => {
+        socket.broadcast.to(roomId).emit(action, data);
+    };
     // Server will apply the changes on its document
     // and broadcast to everyone in room
     socket.on("canvasEvent", input => {
         if (input.type === "addObj" || input.type === "clearDoc") {
             whiteboard.set(roomId, input.data);
-            socket.broadcast.to(roomId).emit("canvasEvent", input.data);
+            broadCastExceptSender("canvasEvent", input.data);
         } else if (input.type === "modifiedObj") {
             whiteboard.set(roomId, input.data);
-            socket.broadcast.to(roomId).emit("canvasEvent", input.data);
+            broadCastExceptSender("canvasEvent", input.data);
         }
     });
 
@@ -131,11 +134,12 @@ io.on("connection", socket => {
     });
 
     socket.on("objectEvent", data => {
-        socket.broadcast.to(roomId).emit("objectEvent", data);
+        broadCastExceptSender("objectEvent", data);
     });
 
     // Leave the room if the user closes the socket
     socket.on("disconnect", () => {
+        console.log("disconnect");
         const room = io.sockets.adapter.rooms.get(roomId);
         //remove client from redis
         client.get(roomId + "-connectedUsers", async (err, connectedUserList) => {
