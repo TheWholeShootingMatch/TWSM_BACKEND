@@ -4,10 +4,8 @@ var TCTs = require("../../models/tcts");
 var TcTMembers = require("../../models/tctMembers");
 const mongoose = require("mongoose");
 var Y = require("yjs");
-const { MongodbPersistence } = require("y-mongodb");
 const location = process.env.DB_HOST;
-const collection = "yjs-transactions";
-const mdb = new MongodbPersistence(location, collection);
+var yjsTransaction = require("../../models/yjsTransaction");
 const redis = require("redis");
 
 const whiteboard = redis.createClient({
@@ -16,7 +14,7 @@ const whiteboard = redis.createClient({
     password: process.env.REDIS_KEY
 });
 
-var { fromUint8Array } = require("js-base64");
+var { fromUint8Array, toUint8Array } = require("js-base64");
 
 router.post("/", async (req, res, next) => {
     // 1. 로그인 상태인지 확인
@@ -39,26 +37,24 @@ router.post("/", async (req, res, next) => {
                         title: project[0].title
                     });
                 } else {
-                    const docName = req.body.TcTnum;
-                    const mongoPersistedYdoc = await mdb.getYDoc(docName); //mongodb에서 doc을 가져옴
-                    if (mongoPersistedYdoc !== null) {
-                        try {
-                            const unit8arrayYdoc = Y.encodeStateAsUpdate(mongoPersistedYdoc);
-                            const base64Ydoc = fromUint8Array(unit8arrayYdoc);
-                            console.log("successfully connect collaboration tool");
-                            return res.send({
-                                base64Ydoc: base64Ydoc,
-                                title: project[0].title
-                            });
-                        } catch (e) {
-                            console.log("fail to encode collaboration toool");
-                            return res.send({
-                                base64Ydoc: "",
-                                title: project[0].title
-                            });
+                    const mongoPersistedYdoc = await yjsTransaction.findOne({ docName: req.body.TcTnum }, (err) => {
+                        if (err) {
+                            console.log(err);
                         }
+                    });
+                    if (mongoPersistedYdoc !== null) {
+                        console.log("successfully connect collaboration tool");
+                        return res.send({
+                            base64Ydoc: mongoPersistedYdoc.docInfo,
+                            title: project[0].title
+                        });
                     } else {
                         console.log("fail to connect collaboration toool");
+                        const newYdoc = new yjsTransaction({
+                            docName: req.body.TcTnum,
+                            docInfo: " "
+                        });
+                        let result = await newYdoc.save();
                         return res.send({
                             base64Ydoc: "",
                             title: project[0].title
@@ -74,7 +70,7 @@ router.post("/", async (req, res, next) => {
 
 router.post("/fetch/title", async (req, res, next) => {
     const TcTnum = new mongoose.Types.ObjectId(req.body.TcTnum);
-    const title = await TCTs.findOne({ _id: TcTnum }, err => {
+    const title = await TCTs.findOne({ _id: TcTnum }, (err) => {
         if (err) {
             console.log("fail to get title", err);
             res.json("");
@@ -87,7 +83,7 @@ router.post("/title", async (req, res, next) => {
     const TcTnum = new mongoose.Types.ObjectId(req.body.TcTnum);
     const title = { $set: { title: req.body.titleInputs } }; //타이틀 변경
 
-    await TCTs.updateOne({ _id: TcTnum }, title, err => {
+    await TCTs.updateOne({ _id: TcTnum }, title, (err) => {
         if (err) {
             console.log("fail to change title");
         } else {

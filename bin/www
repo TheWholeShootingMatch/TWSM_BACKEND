@@ -10,8 +10,10 @@ const { MongodbPersistence } = require("y-mongodb");
 
 /* mdb : mongodb doc */
 const location = process.env.DB_HOST;
-const collection = "yjs-transactions";
-const mdb = new MongodbPersistence(location, collection);
+var yjsTransaction = require("../models/yjsTransaction");
+
+// const collection = "yjs-transactions";
+// const mdb = new MongodbPersistence(location, collection);
 
 /* mvdb : mongodb version doc  */
 const versionCollection = "yjs-versions";
@@ -65,19 +67,21 @@ const COLORS = [
 ];
 
 const io = require("socket.io")(server, {
+    maxHttpBufferSize: 1e8,
     cors: {
         origin: "*"
     }
 });
 
-io.on("connection", socket => {
+io.on("connection", (socket) => {
     // Join a conversation
     const { roomId } = socket.handshake.query;
+    console.log(roomId);
 
     socket.join(roomId);
 
     // Listen for new messages
-    socket.on(NEW_SELECT_EVENT, data => {
+    socket.on(NEW_SELECT_EVENT, (data) => {
         const tctnum = new mongoose.Types.ObjectId(roomId);
 
         let update = {};
@@ -103,7 +107,7 @@ io.on("connection", socket => {
             }
         }
 
-        TCTs.findOneAndUpdate({ _id: tctnum }, update, err => {
+        TCTs.findOneAndUpdate({ _id: tctnum }, update, (err) => {
             if (err) throw err;
         });
 
@@ -112,17 +116,8 @@ io.on("connection", socket => {
 
     // Server will apply the changes on its document
     // and broadcast to everyone in room
-    socket.on("canvasEvent", input => {
-        if (input.type === "addObj" || input.type === "clearDoc") {
-            whiteboard.set(roomId, input.data);
-            socket.broadcast.to(roomId).emit("canvasEvent", input.data);
-        } else if (input.type === "modifiedObj") {
-            whiteboard.set(roomId, input.data);
-            socket.broadcast.to(roomId).emit("canvasEvent", input.data);
-        }
-    });
 
-    socket.on("emitVersionDoc", async docName => {
+    socket.on("emitVersionDoc", async (docName) => {
         const versionDoc = await mvdb.getYDoc(docName);
         const encodeVersionDoc = Y.encodeStateAsUpdate(versionDoc);
         const updatedYdoc = fromUint8Array(encodeVersionDoc); //base64
@@ -130,48 +125,57 @@ io.on("connection", socket => {
         io.in(roomId).emit("versionEvent", updatedYdoc);
     });
 
-    socket.on("objectEvent", data => {
+    socket.on("objectEvent", (data) => {
         socket.broadcast.to(roomId).emit("objectEvent", data);
+    });
+
+    socket.on("canvasEvent", (input) => {
+        console.log("canvasEvent");
+        whiteboard.set(roomId, input.data);
+        socket.broadcast.to(roomId).emit("canvasEvent", input.data);
     });
 
     // Leave the room if the user closes the socket
     socket.on("disconnect", () => {
+        console.log("disconnect");
         const room = io.sockets.adapter.rooms.get(roomId);
         //remove client from redis
         client.get(roomId + "-connectedUsers", async (err, connectedUserList) => {
             if (connectedUserList) {
                 const connectedList = JSON.parse(connectedUserList);
-                const newList = connectedList.filter(list => list.socketId !== socket.id);
+                const newList = connectedList.filter((list) => list.socketId !== socket.id);
                 client.set(roomId + "-connectedUsers", JSON.stringify(newList));
             }
         });
         //"room" undefiend means room is empty
         if (!room) {
+            const id = roomId;
             whiteboard.get(roomId, async (err, redisPersistedYdoc) => {
                 if (redisPersistedYdoc) {
                     console.log("try to store last redis information");
-                    try {
-                        const encodePersistedYdoc = toUint8Array(redisPersistedYdoc); //unit8array
-                        mdb.storeUpdate(roomId, encodePersistedYdoc); //마지막 redis 정보를 디비에 저장
-                        await mdb.flushDocument(roomId);
-                        console.log("successfully store last ydoc data");
-                        whiteboard.del(roomId); //redis 정보를 삭제
-                    } catch (e) {
-                        console.log("fail to store last redis");
-                    }
+                    // const encodePersistedYdoc = toUint8Array(redisPersistedYdoc); //unit8array
+                    const update = { $set: { docInfo: redisPersistedYdoc } };
+                    await yjsTransaction.findOneAndUpdate({ docName: roomId }, update, (err) => {
+                        if (err) {
+                            console.log("fail to store last redis");
+                        } else {
+                            console.log("successfully store last ydoc data");
+                        }
+                    });
                 }
             });
+            // whiteboard.del(id); //redis 정보를 삭제
         } else {
             io.in(roomId).emit(PEER_DISCONNECT_EVENT, socket.id);
         }
     });
 
-    socket.on(PEER_CONNECT_EVENT, data => {
+    socket.on(PEER_CONNECT_EVENT, (data) => {
         client.get(roomId + "-connectedUsers", async (err, connectedUserList) => {
             if (connectedUserList) {
                 const newList = JSON.parse(connectedUserList);
-                const usedColors = newList.map(user => user.color);
-                const availableColors = COLORS.filter(color => !usedColors.includes(color));
+                const usedColors = newList.map((user) => user.color);
+                const availableColors = COLORS.filter((color) => !usedColors.includes(color));
                 newList.push({
                     name: data.name,
                     socketId: socket.id,
