@@ -37,7 +37,7 @@ router.post("/", async (req, res, next) => {
                         title: project[0].title
                     });
                 } else {
-                    const mongoPersistedYdoc = await yjsTransaction.findOne({ docName: req.body.TcTnum }, err => {
+                    const mongoPersistedYdoc = await yjsTransaction.findOne({ docName: req.body.TcTnum }, (err) => {
                         if (err) {
                             console.log(err);
                         }
@@ -55,7 +55,6 @@ router.post("/", async (req, res, next) => {
                             docInfo: " "
                         });
                         let result = await newYdoc.save();
-                        console.log(result);
                         return res.send({
                             base64Ydoc: "",
                             title: project[0].title
@@ -71,7 +70,7 @@ router.post("/", async (req, res, next) => {
 
 router.post("/fetch/title", async (req, res, next) => {
     const TcTnum = new mongoose.Types.ObjectId(req.body.TcTnum);
-    const title = await TCTs.findOne({ _id: TcTnum }, err => {
+    const title = await TCTs.findOne({ _id: TcTnum }, (err) => {
         if (err) {
             console.log("fail to get title", err);
             res.json("");
@@ -84,7 +83,7 @@ router.post("/title", async (req, res, next) => {
     const TcTnum = new mongoose.Types.ObjectId(req.body.TcTnum);
     const title = { $set: { title: req.body.titleInputs } }; //타이틀 변경
 
-    await TCTs.updateOne({ _id: TcTnum }, title, err => {
+    await TCTs.updateOne({ _id: TcTnum }, title, (err) => {
         if (err) {
             console.log("fail to change title");
         } else {
