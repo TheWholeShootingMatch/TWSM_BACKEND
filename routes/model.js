@@ -102,7 +102,10 @@ router.post('/new', upload, async (req, res, next) => {
 
   await Model.findOneAndUpdate(
     { Uid:req.session.user_Oid },
-    update,
+    {
+      $set : update,
+      $setOnInsert: { like_num: 0 }
+    },
     {
       upsert:true
     },

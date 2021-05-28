@@ -95,7 +95,10 @@ router.post('/new', upload, async (req, res, next) => {
 
   await Photographer.findOneAndUpdate(
     { Uid:req.session.user_Oid },
-    update,
+    {
+      $set : update,
+      $setOnInsert: { like_num: 0 }
+    },
     {
       upsert:true
     },

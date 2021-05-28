@@ -1,6 +1,8 @@
 var express = require("express");
 var router = express.Router();
 var User = require("../models/users");
+var Model = require('../models/model');
+var Photographer = require('../models/photographer');
 
 /* login이 되어있는지 확인*/
 router.get("/login", function (req, res, next) {
@@ -111,6 +113,20 @@ router.post("/fav_models_push", function (req, res, next) {
             if (err) throw err;
         }
     );
+
+    Photographer.findOneAndUpdate(
+      { Uid:req.body.id },
+      {
+        $inc: { like_num: 1 }
+      },
+      {
+        upsert:false
+      },
+      err => {
+        if (err) throw err;
+        return res.json({ success: true });
+      }
+    );
 });
 
 router.post("/fav_models_del", function (req, res, next) {
@@ -140,6 +156,8 @@ router.post("/fav_photographer", async function (req, res, next) {
 router.post("/fav_photographers_push", function (req, res, next) {
     console.log("data recieved");
 
+    likePlus(req.body.id);
+
     User.findOneAndUpdate(
         { _id: req.session.user_Oid },
         {
@@ -150,6 +168,18 @@ router.post("/fav_photographers_push", function (req, res, next) {
         }
     );
 });
+
+const likePlus = async (id) => {
+  Photographer.findOneAndUpdate(
+    { Uid:id },
+    {
+      $inc: { like_num: 1 }
+    },
+    {
+      upsert:false
+    }
+  );
+};
 
 router.post("/fav_photographers_del", function (req, res, next) {
     console.log("data recieved");
