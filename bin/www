@@ -164,7 +164,13 @@ io.on("connection", (socket) => {
                     });
                 }
             });
-            // whiteboard.del(id); //redis 정보를 삭제
+            whiteboard.del(id, function (err, response) {
+                if (response == 1) {
+                    console.log("Deleted Successfully!");
+                } else {
+                    console.log("Cannot delete");
+                }
+            });
         } else {
             io.in(roomId).emit(PEER_DISCONNECT_EVENT, socket.id);
         }
