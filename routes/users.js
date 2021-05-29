@@ -1,6 +1,9 @@
 var express = require("express");
 var router = express.Router();
 var User = require("../models/users");
+var Model = require('../models/model');
+var Photographer = require('../models/photographer');
+const mongoose = require("mongoose");
 
 /* login이 되어있는지 확인*/
 router.get("/login", function (req, res, next) {
@@ -99,24 +102,48 @@ router.post("/fav_model", async function (req, res, next) {
     }
 });
 
-router.post("/fav_models_push", function (req, res, next) {
+router.post("/fav_models_push", async function (req, res, next) {
     console.log("data recieved");
+    const like = await likeM(req.body.id,1);
 
-    User.findOneAndUpdate(
+    const usr = await User.findOneAndUpdate(
         { _id: req.session.user_Oid },
         {
             $addToSet: { fav_models: req.body.id }
-        },
-        err => {
-            if (err) throw err;
         }
     );
+
+    if (!usr) {
+        console.log("fail to add fav");
+        return false;
+    } else {
+        console.log("success to add fav");
+        return true;
+    }
 });
 
-router.post("/fav_models_del", function (req, res, next) {
-    console.log("data recieved");
+const likeM = async (id,num) => {
+  let result = await Model.findOneAndUpdate(
+    { _id:id },
+    {
+      $inc: { like_num: num }
+    }
+  );
 
-    User.findOneAndUpdate(
+    if (!result) {
+        console.log(result,"fail to like");
+        return false;
+    } else {
+        console.log("success to like");
+        return true;
+    }
+};
+
+router.post("/fav_models_del", async function (req, res, next) {
+    console.log("data recieved");
+    const like = await likeM(req.body.id,-1);
+
+    const usr = await User.findOneAndUpdate(
         { _id: req.session.user_Oid },
         {
             $pull: { fav_models: req.body.id }
@@ -137,24 +164,48 @@ router.post("/fav_photographer", async function (req, res, next) {
     }
 });
 
-router.post("/fav_photographers_push", function (req, res, next) {
+router.post("/fav_photographers_push", async function (req, res, next) {
     console.log("data recieved");
+    const like = await likeP(req.body.id,1);
 
-    User.findOneAndUpdate(
+    const usr = await User.findOneAndUpdate(
         { _id: req.session.user_Oid },
         {
-            $addToSet: { fav_photographers: req.body.id }
-        },
-        err => {
-            if (err) throw err;
+          $addToSet: { fav_photographers: req.body.id }
         }
     );
+
+    if (!usr) {
+        console.log("fail to add fav");
+        return false;
+    } else {
+        console.log("success to add fav");
+        return true;
+    }
 });
 
-router.post("/fav_photographers_del", function (req, res, next) {
-    console.log("data recieved");
+const likeP = async (id,num) => {
+  let result = await Photographer.findOneAndUpdate(
+    { _id:id },
+    {
+      $inc: { like_num: num }
+    }
+  );
 
-    User.findOneAndUpdate(
+    if (!result) {
+        console.log(result,"fail to like");
+        return false;
+    } else {
+        console.log("success to like");
+        return true;
+    }
+};
+
+router.post("/fav_photographers_del", async function (req, res, next) {
+    console.log("data recieved");
+    const like = await likeP(req.body.id,-1);
+
+    const usr = User.findOneAndUpdate(
         { _id: req.session.user_Oid },
         {
             $pull: { fav_photographers: req.body.id }

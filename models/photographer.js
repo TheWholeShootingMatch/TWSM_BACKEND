@@ -35,6 +35,10 @@ const photographerSchema = new Schema({
     },
     locations:{
       type: String
+    },
+    like_num: {
+      type: Number,
+      required: true,
     }
 });
 
