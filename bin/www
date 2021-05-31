@@ -4,204 +4,204 @@
 var { app, sessionMiddleware } = require("../app");
 var debug = require("debug")("twsm-backend:server");
 var http = require("http");
-var Y = require("yjs");
-var { fromUint8Array, toUint8Array } = require("js-base64");
-const { MongodbPersistence } = require("y-mongodb");
+// var Y = require("yjs");
+// var { fromUint8Array, toUint8Array } = require("js-base64");
+// const { MongodbPersistence } = require("y-mongodb");
 
-/* mdb : mongodb doc */
-const location = process.env.DB_HOST;
-var yjsTransaction = require("../models/yjsTransaction");
+// /* mdb : mongodb doc */
+// const location = process.env.DB_HOST;
+// var yjsTransaction = require("../models/yjsTransaction");
 
-// const collection = "yjs-transactions";
-// const mdb = new MongodbPersistence(location, collection);
+// // const collection = "yjs-transactions";
+// // const mdb = new MongodbPersistence(location, collection);
 
-/* mvdb : mongodb version doc  */
-const versionCollection = "yjs-versions";
-const mvdb = new MongodbPersistence(location, versionCollection);
+// /* mvdb : mongodb version doc  */
+// const versionCollection = "yjs-versions";
+// const mvdb = new MongodbPersistence(location, versionCollection);
 
-/* redis */
-const redis = require("redis");
-const whiteboard = redis.createClient({
-    host: "13.124.192.207",
-    port: 6379,
-    password: process.env.REDIS_KEY
-});
-const client = redis.createClient({
-    host: "13.124.192.207",
-    port: 6379,
-    password: process.env.REDIS_KEY
-});
+// /* redis */
+// const redis = require("redis");
+// const whiteboard = redis.createClient({
+//     host: "13.124.192.207",
+//     port: 6379,
+//     password: process.env.REDIS_KEY
+// });
+// const client = redis.createClient({
+//     host: "13.124.192.207",
+//     port: 6379,
+//     password: process.env.REDIS_KEY
+// });
 
-/**
- * Get port from environment and store in Express.
- */
+// /**
+//  * Get port from environment and store in Express.
+//  */
 var port = normalizePort(process.env.PORT || "3001");
 app.set("port", port);
 
-/**
- * Create HTTP server.
- */
+// /**
+//  * Create HTTP server.
+//  */
 var server = http.createServer(app);
 
-/**
- * Listen on provided port, on all network interfaces.
- */
-const mongoose = require("mongoose");
-var TCTs = require("../models/tcts");
-const { CloudWatchEvents } = require("aws-sdk");
-const NEW_SELECT_EVENT = "newSelect";
-const PEER_INIT_EVENT = "peerInitEvent";
-const PEER_CONNECT_EVENT = "peerConnectEvent";
-const PEER_DISCONNECT_EVENT = "peerDisconnectEvent";
-const COLORS = [
-    "#8AD2D8",
-    "#C6A68E",
-    "#558AA4",
-    "#F15E3D",
-    "#56704B",
-    "#CC3B7C",
-    "#005594",
-    "#89B65A",
-    "#EBC98E",
-    "#EFCB5E"
-];
+// /**
+//  * Listen on provided port, on all network interfaces.
+//  */
+// const mongoose = require("mongoose");
+// var TCTs = require("../models/tcts");
+// const { CloudWatchEvents } = require("aws-sdk");
+// const NEW_SELECT_EVENT = "newSelect";
+// const PEER_INIT_EVENT = "peerInitEvent";
+// const PEER_CONNECT_EVENT = "peerConnectEvent";
+// const PEER_DISCONNECT_EVENT = "peerDisconnectEvent";
+// const COLORS = [
+//     "#8AD2D8",
+//     "#C6A68E",
+//     "#558AA4",
+//     "#F15E3D",
+//     "#56704B",
+//     "#CC3B7C",
+//     "#005594",
+//     "#89B65A",
+//     "#EBC98E",
+//     "#EFCB5E"
+// ];
 
-const io = require("socket.io")(server, {
-    maxHttpBufferSize: 1e8,
-    cors: {
-        origin: "*"
-    }
-});
+// const io = require("socket.io")(server, {
+//     maxHttpBufferSize: 1e8,
+//     cors: {
+//         origin: "*"
+//     }
+// });
 
-io.on("connection", (socket) => {
-    // Join a conversation
-    const { roomId } = socket.handshake.query;
-    console.log(roomId);
+// io.on("connection", (socket) => {
+//     // Join a conversation
+//     const { roomId } = socket.handshake.query;
+//     console.log(roomId);
 
-    socket.join(roomId);
+//     socket.join(roomId);
 
-    // Listen for new messages
-    socket.on(NEW_SELECT_EVENT, (data) => {
-        const tctnum = new mongoose.Types.ObjectId(roomId);
+//     // Listen for new messages
+//     socket.on(NEW_SELECT_EVENT, (data) => {
+//         const tctnum = new mongoose.Types.ObjectId(roomId);
 
-        let update = {};
-        if (data.type === "M") {
-            update = {
-                $addToSet: { models: data.body }
-            };
+//         let update = {};
+//         if (data.type === "M") {
+//             update = {
+//                 $addToSet: { models: data.body }
+//             };
 
-            if (data.func === "D") {
-                update = {
-                    $pull: { models: data.body }
-                };
-            }
-        } else {
-            update = {
-                $addToSet: { photographers: data.body }
-            };
+//             if (data.func === "D") {
+//                 update = {
+//                     $pull: { models: data.body }
+//                 };
+//             }
+//         } else {
+//             update = {
+//                 $addToSet: { photographers: data.body }
+//             };
 
-            if (data.func === "D") {
-                update = {
-                    $pull: { photographers: data.body }
-                };
-            }
-        }
+//             if (data.func === "D") {
+//                 update = {
+//                     $pull: { photographers: data.body }
+//                 };
+//             }
+//         }
 
-        TCTs.findOneAndUpdate({ _id: tctnum }, update, (err) => {
-            if (err) throw err;
-        });
+//         TCTs.findOneAndUpdate({ _id: tctnum }, update, (err) => {
+//             if (err) throw err;
+//         });
 
-        io.in(roomId).emit(NEW_SELECT_EVENT, data);
-    });
+//         io.in(roomId).emit(NEW_SELECT_EVENT, data);
+//     });
 
-    // Server will apply the changes on its document
-    // and broadcast to everyone in room
+//     // Server will apply the changes on its document
+//     // and broadcast to everyone in room
 
-    socket.on("emitVersionDoc", async (docName) => {
-        const versionDoc = await mvdb.getYDoc(docName);
-        const encodeVersionDoc = Y.encodeStateAsUpdate(versionDoc);
-        const updatedYdoc = fromUint8Array(encodeVersionDoc); //base64
-        whiteboard.set(roomId, updatedYdoc);
-        io.in(roomId).emit("versionEvent", updatedYdoc);
-    });
+//     socket.on("emitVersionDoc", async (docName) => {
+//         const versionDoc = await mvdb.getYDoc(docName);
+//         const encodeVersionDoc = Y.encodeStateAsUpdate(versionDoc);
+//         const updatedYdoc = fromUint8Array(encodeVersionDoc); //base64
+//         whiteboard.set(roomId, updatedYdoc);
+//         io.in(roomId).emit("versionEvent", updatedYdoc);
+//     });
 
-    socket.on("objectEvent", (data) => {
-        socket.broadcast.to(roomId).emit("objectEvent", data);
-    });
+//     socket.on("objectEvent", (data) => {
+//         socket.broadcast.to(roomId).emit("objectEvent", data);
+//     });
 
-    socket.on("canvasEvent", (input) => {
-        console.log("canvasEvent");
-        whiteboard.set(roomId, input.data);
-        socket.broadcast.to(roomId).emit("canvasEvent", input.data);
-    });
+//     socket.on("canvasEvent", (input) => {
+//         console.log("canvasEvent");
+//         whiteboard.set(roomId, input.data);
+//         socket.broadcast.to(roomId).emit("canvasEvent", input.data);
+//     });
 
-    // Leave the room if the user closes the socket
-    socket.on("disconnect", () => {
-        console.log("disconnect");
-        const room = io.sockets.adapter.rooms.get(roomId);
-        //remove client from redis
-        client.get(roomId + "-connectedUsers", async (err, connectedUserList) => {
-            if (connectedUserList) {
-                const connectedList = JSON.parse(connectedUserList);
-                const newList = connectedList.filter((list) => list.socketId !== socket.id);
-                client.set(roomId + "-connectedUsers", JSON.stringify(newList));
-            }
-        });
-        //"room" undefiend means room is empty
-        if (!room) {
-            const id = roomId;
-            whiteboard.get(roomId, async (err, redisPersistedYdoc) => {
-                if (redisPersistedYdoc) {
-                    console.log("try to store last redis information");
-                    // const encodePersistedYdoc = toUint8Array(redisPersistedYdoc); //unit8array
-                    const update = { $set: { docInfo: redisPersistedYdoc } };
-                    await yjsTransaction.findOneAndUpdate({ docName: roomId }, update, (err) => {
-                        if (err) {
-                            console.log("fail to store last redis");
-                        } else {
-                            console.log("successfully store last ydoc data");
-                        }
-                    });
-                }
-            });
-            whiteboard.del(id, function (err, response) {
-                if (response == 1) {
-                    console.log("Deleted Successfully!");
-                } else {
-                    console.log("Cannot delete");
-                }
-            });
-        } else {
-            io.in(roomId).emit(PEER_DISCONNECT_EVENT, socket.id);
-        }
-    });
+//     // Leave the room if the user closes the socket
+//     socket.on("disconnect", () => {
+//         console.log("disconnect");
+//         const room = io.sockets.adapter.rooms.get(roomId);
+//         //remove client from redis
+//         client.get(roomId + "-connectedUsers", async (err, connectedUserList) => {
+//             if (connectedUserList) {
+//                 const connectedList = JSON.parse(connectedUserList);
+//                 const newList = connectedList.filter((list) => list.socketId !== socket.id);
+//                 client.set(roomId + "-connectedUsers", JSON.stringify(newList));
+//             }
+//         });
+//         //"room" undefiend means room is empty
+//         if (!room) {
+//             const id = roomId;
+//             whiteboard.get(roomId, async (err, redisPersistedYdoc) => {
+//                 if (redisPersistedYdoc) {
+//                     console.log("try to store last redis information");
+//                     // const encodePersistedYdoc = toUint8Array(redisPersistedYdoc); //unit8array
+//                     const update = { $set: { docInfo: redisPersistedYdoc } };
+//                     await yjsTransaction.findOneAndUpdate({ docName: roomId }, update, (err) => {
+//                         if (err) {
+//                             console.log("fail to store last redis");
+//                         } else {
+//                             console.log("successfully store last ydoc data");
+//                         }
+//                     });
+//                 }
+//             });
+//             whiteboard.del(id, function (err, response) {
+//                 if (response == 1) {
+//                     console.log("Deleted Successfully!");
+//                 } else {
+//                     console.log("Cannot delete");
+//                 }
+//             });
+//         } else {
+//             io.in(roomId).emit(PEER_DISCONNECT_EVENT, socket.id);
+//         }
+//     });
 
-    socket.on(PEER_CONNECT_EVENT, (data) => {
-        client.get(roomId + "-connectedUsers", async (err, connectedUserList) => {
-            if (connectedUserList) {
-                const newList = JSON.parse(connectedUserList);
-                const usedColors = newList.map((user) => user.color);
-                const availableColors = COLORS.filter((color) => !usedColors.includes(color));
-                newList.push({
-                    name: data.name,
-                    socketId: socket.id,
-                    color: availableColors[0]
-                });
-                client.set(roomId + "-connectedUsers", JSON.stringify(newList));
-                io.in(roomId).emit(PEER_CONNECT_EVENT, newList);
-            } else {
-                const newList = [
-                    {
-                        name: data.name,
-                        socketId: socket.id,
-                        color: COLORS[0]
-                    }
-                ];
-                client.set(roomId + "-connectedUsers", JSON.stringify(newList));
-            }
-        });
-    });
-});
+//     socket.on(PEER_CONNECT_EVENT, (data) => {
+//         client.get(roomId + "-connectedUsers", async (err, connectedUserList) => {
+//             if (connectedUserList) {
+//                 const newList = JSON.parse(connectedUserList);
+//                 const usedColors = newList.map((user) => user.color);
+//                 const availableColors = COLORS.filter((color) => !usedColors.includes(color));
+//                 newList.push({
+//                     name: data.name,
+//                     socketId: socket.id,
+//                     color: availableColors[0]
+//                 });
+//                 client.set(roomId + "-connectedUsers", JSON.stringify(newList));
+//                 io.in(roomId).emit(PEER_CONNECT_EVENT, newList);
+//             } else {
+//                 const newList = [
+//                     {
+//                         name: data.name,
+//                         socketId: socket.id,
+//                         color: COLORS[0]
+//                     }
+//                 ];
+//                 client.set(roomId + "-connectedUsers", JSON.stringify(newList));
+//             }
+//         });
+//     });
+// });
 
 server.listen(port);
 server.on("error", onError);
