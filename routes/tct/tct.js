@@ -3,8 +3,6 @@ var router = express.Router();
 var TCTs = require("../../models/tcts");
 var TcTMembers = require("../../models/tctMembers");
 const mongoose = require("mongoose");
-var Y = require("yjs");
-const location = process.env.DB_HOST;
 var yjsTransaction = require("../../models/yjsTransaction");
 const redis = require("redis");
 
@@ -13,8 +11,6 @@ const whiteboard = redis.createClient({
     port: 6379,
     password: process.env.REDIS_KEY
 });
-
-var { fromUint8Array, toUint8Array } = require("js-base64");
 
 router.post("/", async (req, res, next) => {
     // 1. 로그인 상태인지 확인
