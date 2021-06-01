@@ -23,6 +23,10 @@ const corllaborateProjectSchema = new Schema({
       type: String,
       required: true,
     },
+    country:{
+      type: String,
+      required: true
+    },
     location: {
         type: String,
         required: true

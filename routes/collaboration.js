@@ -22,6 +22,7 @@ router.post('/new', async(req, res, next) => {
       title : req.body.title,
       corporation_name : req.body.corporation_name,
       about_project : req.body.about_project,
+      country : req.body.country,
       location : req.body.location,
       Pdate : req.body.date,
       model : req.body.Model,
