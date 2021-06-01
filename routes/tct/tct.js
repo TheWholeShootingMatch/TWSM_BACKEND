@@ -7,7 +7,7 @@ var yjsTransaction = require("../../models/yjsTransaction");
 const redis = require("redis");
 
 const whiteboard = redis.createClient({
-    host: "13.124.192.207",
+    host: process.env.REDIS_HOST,
     port: 6379,
     password: process.env.REDIS_KEY
 });
